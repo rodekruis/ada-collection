@@ -19,11 +19,15 @@ Tools:
 
 ## Requirements:
 ### NVIDIA GPU Drivers [mandatory for train and predict]
-`wget http://us.download.nvidia.com/XFree86/Linux-x86_64/435.21/NVIDIA-Linux-x86_64-435.21.run`
-`sudo sh NVIDIA-Linux-x86_64-435.21.run -a -q --ui=none`
+```bash
+wget http://us.download.nvidia.com/XFree86/Linux-x86_64/435.21/NVIDIA-Linux-x86_64-435.21.run
+sudo sh NVIDIA-Linux-x86_64-435.21.run -a -q --ui=none
+```
 
 ### HTTP Server [for WebUI rendering]
-`sudo apt install -y apache2 && sudo ln -s ~ /var/www/html/neo`
+```bash
+sudo apt install -y apache2 && sudo ln -s ~ /var/www/html/neo
+```
 
 ## NOTES:
 1. Requires: Python 3.6 or 3.7
