@@ -6,7 +6,7 @@ osmium==3.0.1
 Pillow==7.2.0
 psycopg2-binary==2.8.5
 rasterio==1.1.5
-Shapely==1.7.1
+Shapely>=1.7.0
 supermercado==0.1.1
 toml==0.10.1
 torch==1.6.0
