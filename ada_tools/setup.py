@@ -26,8 +26,12 @@ setuptools.setup(
     },
     entry_points={
         'console_scripts': [
-            f"load_images = {project_name}.data_processing.get_images_Maxar:main",
-            f"filter_images = {project_name}.data_processing.filter_images:main"
+            f"load_images = {project_name}.get_images_maxar:main",
+            f"filter_images = {project_name}.filter_images:main",
+            f"filter_buildings = {project_name}.filter_buildings:main",
+            f"final_layer = {project_name}.final_layer:main",
+            f"get_osm = {project_name}.get_osm_data_in_bbox:main",
+            f"prepare_data = {project_name}.prepare_data_for_caladrius:main",
         ]
     }
 )
