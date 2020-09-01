@@ -2,6 +2,8 @@ FROM python:3.8-slim
 
 ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
 ENV C_INCLUDE_PATH=/usr/include/gdal
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
 
 RUN deps='build-essential cmake gdal-bin python-gdal libgdal-dev kmod wget apache2' && \
 	apt-get update && \

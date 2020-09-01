@@ -18,3 +18,6 @@ RUN pip install --upgrade pip && \
 WORKDIR /neo
 ADD . .
 RUN pip install .
+
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
