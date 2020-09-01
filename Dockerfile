@@ -14,3 +14,7 @@ RUN deps='build-essential cmake gdal-bin python-gdal libgdal-dev kmod wget apach
 WORKDIR /neo
 ADD neat_eo .
 RUN pip install .
+
+WORKDIR /ada_tools
+ADD ada_tools .
+RUN pip install .
