@@ -12,5 +12,5 @@ RUN deps='build-essential cmake gdal-bin python-gdal libgdal-dev kmod wget apach
 	pip install GDAL==$(gdal-config --version)
 
 WORKDIR /neo
-ADD . .
+ADD neat_eo .
 RUN pip install .

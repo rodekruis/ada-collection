@@ -16,7 +16,7 @@ RUN pip install --upgrade pip && \
 	pip install GDAL==$(gdal-config --version)
 
 WORKDIR /neo
-ADD . .
+ADD neat_eo .
 RUN pip install .
 
 ENV LC_ALL=C.UTF-8
