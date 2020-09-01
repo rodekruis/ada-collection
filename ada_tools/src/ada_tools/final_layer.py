@@ -4,11 +4,12 @@ import click
 from tqdm import tqdm
 import numpy as np
 
+
 @click.command()
 @click.option('--builds', help='input (buildings)')
 @click.option('--damage', help='input (damage classes)')
 @click.option('--out', default='buildings_predictions.geojson', help='input')
-def final_layer(builds, damage, out):
+def main(builds, damage, out):
     df = gpd.read_file(builds).to_crs(epsg="4326")
     df = df.loc[~df["geometry"].is_empty]
     if "OBJECTID" in df.columns:
@@ -34,4 +35,4 @@ def final_layer(builds, damage, out):
 
 
 if __name__ == "__main__":
-    final_layer()
+    main()
