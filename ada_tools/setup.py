@@ -3,16 +3,16 @@ Setup.py file.
 Install once-off with:  "pip install ."
 For development:        "pip install -e .[dev]"
 """
-
 import setuptools
+
 
 with open("requirements.txt") as f:
     install_requires = f.read().splitlines()
 
-project_name = "ada_tools"
+PROJECT_NAME = "ada_tools"
 
 setuptools.setup(
-    name=project_name,
+    name=PROJECT_NAME,
     version="0.1",
     description="Satelite image preprocessing utilities",
     packages=setuptools.find_packages(where="src"),
@@ -26,12 +26,12 @@ setuptools.setup(
     },
     entry_points={
         'console_scripts': [
-            f"load_images = {project_name}.get_images_maxar:main",
-            f"filter_images = {project_name}.filter_images:main",
-            f"filter_buildings = {project_name}.filter_buildings:main",
-            f"final_layer = {project_name}.final_layer:main",
-            f"get_osm = {project_name}.get_osm_data_in_bbox:main",
-            f"prepare_data = {project_name}.prepare_data_for_caladrius:main",
+            f"load_images = {PROJECT_NAME}.get_images_maxar:main",
+            f"filter_images = {PROJECT_NAME}.filter_images:main",
+            f"filter_buildings = {PROJECT_NAME}.filter_buildings:main",
+            f"final_layer = {PROJECT_NAME}.final_layer:main",
+            f"get_osm = {PROJECT_NAME}.get_osm_data_in_bbox:main",
+            f"prepare_data = {PROJECT_NAME}.prepare_data_for_caladrius:main",
         ]
     }
 )

@@ -176,9 +176,10 @@ def filter_by_ntl(country, ntl_shapefile, dest):
 @click.option('--data', default='input', help='original images')
 @click.option('--dest', default='output', help='destination folder')
 @click.option('--ntl', default=False, help='filter pre-event images by night-time lights (yes/no)')
+@click.option('--ntl-shapefile', default=None, help='path to ntl shapefile, only needed with --ntl flag')
 @click.option('--bbox', default='', help='filter pre-event images by bounding box (CSV format)')
 @click.option('--country', default='Philippines', help='country')
-def main(mosaic, data, dest, ntl, bbox, country):
+def main(mosaic, data, dest, ntl, bbox, country, ntl_shapefile):
 
     os.makedirs(dest, exist_ok=True)
     os.makedirs(dest+'/pre-event', exist_ok=True)
@@ -190,7 +191,6 @@ def main(mosaic, data, dest, ntl, bbox, country):
         create_raster_mosaic(data, dest)
 
     # filter pre-event rasters
-
     print('filtering pre-event rasters')
 
     # filter by bounding box (if provided)
@@ -206,7 +206,7 @@ def main(mosaic, data, dest, ntl, bbox, country):
         for raster in tqdm(glob.glob(dest + '/pre-event/*.tif')):
             raster = raster.replace('\\', '/')
             raster_or = raster
-            out_name = raster.split('.')[0] +'-bbox.tif'
+            out_name = raster.split('.')[0] + '-bbox.tif'
             with rasterio.open(raster) as src:
                 print('cropping on bbox')
 
@@ -227,10 +227,9 @@ def main(mosaic, data, dest, ntl, bbox, country):
             os.remove(raster_or)
 
     # filter by nighttime lights
-
-    # load nighttime light mask
-    ntl_shapefile = 'input/ntl_mask_extended.shp'
     if ntl:
+        if not ntl_shapefile:
+            raise ValueError('Please provide path to a valid ntl_shapefile.')
         # filter mask by country (if provided)
         if country != '':
             country_ntl_shapefile = ntl_shapefile.split('.')[0] + '_' + country.lower() + '.shp'
