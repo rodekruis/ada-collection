@@ -1,3 +1,16 @@
+## Added from ADA_tools
+ada_tools/src/ada_tools/data_processing/data/*
+**/geckodriver.log
+**/run.log
+
+# ADA data
+input/
+output/
+
+# ds dev stuff
+data/
+notebooks_dev/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 **/data/
