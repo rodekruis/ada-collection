@@ -1,5 +1,15 @@
 # neat-EO-fork
-Fork of neat-EO repo (https://neat-eo.pink/)
+
+Unofficial copy of neat-EO repo (https://neat-eo.pink/), which cannot
+be publicly shared on GitHub because of regulations of satellite image
+processing software.
+
+To make the package installable, `setup.py` has been adjusted, along with
+a rearranged file structure.
+
+## Readme from the original project:
+
+---- 
 
 ## Documentation:
 Tools:

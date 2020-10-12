@@ -14,7 +14,7 @@ PROJECT_NAME = "ada_tools"
 setuptools.setup(
     name=PROJECT_NAME,
     version="0.1",
-    description="Satelite image preprocessing utilities",
+    description="Satellite image preprocessing utilities",
     packages=setuptools.find_packages(where="src"),
     package_dir={"": "src"},
     install_requires=install_requires,
