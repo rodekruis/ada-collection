@@ -19,5 +19,9 @@ WORKDIR /neo
 ADD neat_eo .
 RUN pip install .
 
+WORKDIR /ada_tools
+ADD ada_tools .
+RUN pip install . && pip install torchvision
+
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
