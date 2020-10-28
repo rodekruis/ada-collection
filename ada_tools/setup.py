@@ -31,6 +31,8 @@ setuptools.setup(
             f"filter-buildings = {PROJECT_NAME}.filter_buildings:main",
             f"final-layer = {PROJECT_NAME}.final_layer:main",
             f"prepare-data = {PROJECT_NAME}.prepare_data_for_caladrius:main",
+            f"create-index = {PROJECT_NAME}.create_index:main",
+            f"setup-wd = {PROJECT_NAME}.setup_wd:main"
         ]
     }
 )
