@@ -28,14 +28,25 @@ def reporthook(count, block_size, total_size):
 
 
 def get_maxar_image_urls(base_url):
+    """
+    Parse the image urls from a Maxar dataset webpage.
+
+    The webpage contains a single <textarea> containing a newline-delimited list of
+    urls. Written on 2020-11-03, will probably break in the future due to the nature of
+    webpages.
+    """
     response = urllib.request.urlopen(base_url)
     html = response.read()
     html_soup = BeautifulSoup(html, 'html.parser')
-    return [el['href'] for el in html_soup.find_all('a') if el['href'].endswith('.tif')]
+    return [
+        url.strip()
+        for url in html_soup.find_all("textarea")[0].text.split("\n")
+        if url.strip().endswith(".tif")
+    ]
 
 
 @click.command()
-@click.option('--disaster', default='typhoon-mangkhut', help='name of the disaster')
+@click.option('--disaster', default='mauritius-oil-spill', help='name of the disaster')
 @click.option('--dest', default='input', help='destination folder')
 @click.option('--maxpre', default=1000000, help='max number of pre-disaster images')
 @click.option('--maxpost', default=1000000, help='max number of post-disaster images')
@@ -45,7 +56,7 @@ def main(disaster, dest, maxpre, maxpost):
     os.makedirs(dest+'/post-event', exist_ok=True)
 
     # scrape maxar webpage for image urls
-    base_url = 'https://www.digitalglobe.com/ecosystem/open-data/' + disaster
+    base_url = 'https://www.maxar.com/open-data/' + disaster
     images = get_maxar_image_urls(base_url)
 
     # download images
