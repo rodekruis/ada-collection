@@ -47,15 +47,24 @@ def download_images(
     images_pre: List[str],
     images_post: List[str],
     dest: str,
-    maxpre: int,
-    maxpost: int,
     max_threads: int = None,
+    progress_format: float = 1e6
 ) -> None:
+    """
+    images_pre: List of urls for pre-disaster images.
+    images_post: List of urls for post-disaster images.
+    dest: Destination folder. Pre-disaster images are downloaded to `dest`/pre-event,
+        post-disaster images to `dest`/post-event.
+    max_threads: Maximum number of concurrent threads to download from. If None,
+        Python's heuristics are used.
+    progress_format: Download progress is printed as bytes / `progress_format`. For
+        example, a value of 1e3 would print as kilobytes, 1e6 as megabytes, and so on.
+    """
     # reporthook function to update the progress bars
     def _reporthook(count, block_size, total_size):
         pbar = PROGRESS_BARS[threading.get_ident()]
-        pbar.total = total_size
-        pbar.update(block_size)
+        pbar.total = total_size / progress_format
+        pbar.update(block_size / progress_format)
 
     # wrapper function to pass to the threads
     def _download(url, folder):
@@ -79,18 +88,43 @@ def download_images(
 @click.option('--dest', default='input', help='destination folder')
 @click.option('--maxpre', default=1000000, help='max number of pre-disaster images')
 @click.option('--maxpost', default=1000000, help='max number of post-disaster images')
-def main(disaster, dest, maxpre, maxpost):
+@click.option(
+    '--maxthreads',
+    default=None,
+    type=int,
+    help="max number of download threads, if omitted Python's heuristics are used"
+)
+@click.option(
+    '--progress-format',
+    type=click.Choice(["B", "KB", "MB", "GB"], case_sensitive=False),
+    default="MB",
+    help="size unit to format the download progress bar"
+)
+def main(disaster, dest, maxpre, maxpost, maxthreads, progress_format):
     os.makedirs(dest, exist_ok=True)
     os.makedirs(dest+'/pre-event', exist_ok=True)
     os.makedirs(dest+'/post-event', exist_ok=True)
 
     urls = get_maxar_image_urls(disaster)
     images_pre, images_post = split_pre_post(urls)
+
+    # apply maxpre and maxpost
+    images_pre = images_pre[:maxpre]
+    images_post = images_post[:maxpost]
+
     print("Selected pre-images:")
     print("\n".join(images_pre))
     print("Selected post-images:")
     print("\n".join(images_post))
-    download_images(images_pre, images_post, dest, maxpre, maxpost)
+
+    size_numerator = {"B": 1, "KB": 1e3, "MB": 1e6, "GB": 1e9}.get(progress_format)
+    download_images(
+        images_pre=images_pre,
+        images_post=images_post,
+        dest=dest,
+        max_threads=maxthreads,
+        progress_format=size_numerator,
+    )
 
 
 if __name__ == "__main__":
