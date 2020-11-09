@@ -16,13 +16,6 @@ from tqdm import tqdm
 PROGRESS_BARS: Dict[int, tqdm] = {}
 
 
-def reporthook(count, block_size, total_size):
-    "Update the download's progress bar from a thread."
-    pbar = PROGRESS_BARS[threading.get_ident()]
-    pbar.total = total_size
-    pbar.update(block_size)
-
-
 def get_maxar_image_urls(disaster: str) -> List[str]:
     """
     Parse the image urls from a Maxar dataset webpage.
@@ -58,6 +51,12 @@ def download_images(
     maxpost: int,
     max_threads: int = None,
 ) -> None:
+    # reporthook function to update the progress bars
+    def _reporthook(count, block_size, total_size):
+        pbar = PROGRESS_BARS[threading.get_ident()]
+        pbar.total = total_size
+        pbar.update(block_size)
+
     # wrapper function to pass to the threads
     def _download(url, folder):
         # create the progress bar
@@ -66,19 +65,13 @@ def download_images(
         name = url.split('/')[-1]
         cat = url.split('/')[-2]
         name = f"{cat}-{name}"
-        urllib.request.urlretrieve(url, os.path.join(folder, name), reporthook)
+        urllib.request.urlretrieve(url, os.path.join(folder, name), _reporthook)
 
     pre_paths = [os.path.join(dest, "pre-event")] * len(images_pre)
     post_paths = [os.path.join(dest, "post-event")] * len(images_post)
     with ThreadPoolExecutor(max_workers=max_threads) as executor:
-        # wrap in a `list` call to trigger execution, since we don't care about the outputs
-        list(
-            executor.map(
-                _download,
-                images_pre + images_post,
-                pre_paths + post_paths,
-            )
-        )
+        executor.map(_download, images_pre + images_post, pre_paths + post_paths)
+
 
 
 @click.command()
