@@ -42,15 +42,12 @@ def get_maxar_image_urls(disaster: str) -> List[str]:
     ]
 
 
-def intersect_pre_post(images: List[str]) -> Tuple[List[str], List[str]]:
+def split_pre_post(images: List[str]) -> Tuple[List[str], List[str]]:
+    "Split images into the pre- and post-disaster images."
     images_pre = [x for x in images if 'pre-' in x.split('/')[-4]]
     images_post = [x for x in images if 'post-' in x.split('/')[-4]]
-    images_pre_selected = [x for x in images_pre if x.split('/')[-1] in [x.split('/')[-1] for x in images_post]]
-    images_post_selected = [x for x in images_post if x.split('/')[-1] in [x.split('/')[-1] for x in images_pre]]
-    images_pre_selected = sorted(images_pre_selected, key=lambda x: x.split('/')[-1])
-    images_post_selected = sorted(images_post_selected, key=lambda x: x.split('/')[-1])
 
-    return images_pre_selected, images_post_selected
+    return images_pre, images_post
 
 
 def download_images(
@@ -95,7 +92,7 @@ def main(disaster, dest, maxpre, maxpost):
     os.makedirs(dest+'/post-event', exist_ok=True)
 
     urls = get_maxar_image_urls(disaster)
-    images_pre, images_post = intersect_pre_post(urls)
+    images_pre, images_post = split_pre_post(urls)
     print("Selected pre-images:")
     print("\n".join(images_pre))
     print("Selected post-images:")
