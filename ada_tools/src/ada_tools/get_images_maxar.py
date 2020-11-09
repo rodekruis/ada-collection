@@ -8,12 +8,6 @@ from tqdm import tqdm
 from typing import List
 
 
-def getFeatures(gdf):
-    """Function to parse features from GeoDataFrame in such a manner that rasterio wants them"""
-    import json
-    return [json.loads(gdf.to_json())['features'][0]['geometry']]
-
-
 def reporthook(count, block_size, total_size):
     global start_time
     if count == 0:
