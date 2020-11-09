@@ -4,22 +4,23 @@ import sys
 import time
 import click
 import os
+import os.path
 from tqdm import tqdm
-from typing import List, Tuple
+from typing import List, Tuple, Dict
+from concurrent.futures import ThreadPoolExecutor
+import threading
+from tqdm import tqdm
+
+
+# Global mapping of thread ids to tqdm progress bars to show download progress.
+PROGRESS_BARS: Dict[int, tqdm] = {}
 
 
 def reporthook(count, block_size, total_size):
-    global start_time
-    if count == 0:
-        start_time = time.time()
-        return
-    duration = max(time.time() - start_time, 1)
-    progress_size = int(count * block_size)
-    speed = int(progress_size / (1024 * duration))
-    percent = min(int(count * block_size * 100 / total_size), 100)
-    sys.stdout.write("\r...%d%%, %d MB, %d KB/s, %d seconds passed" %
-                    (percent, progress_size / (1024 * 1024), speed, duration))
-    sys.stdout.flush()
+    "Update the download's progress bar from a thread."
+    pbar = PROGRESS_BARS[threading.get_ident()]
+    pbar.total = total_size
+    pbar.update(block_size)
 
 
 def get_maxar_image_urls(disaster: str) -> List[str]:
@@ -53,21 +54,34 @@ def intersect_pre_post(images: List[str]) -> Tuple[List[str], List[str]]:
 
 
 def download_images(
-    images_pre: List[str], images_post: List[str], dest: str, maxpre: int, maxpost: int
+    images_pre: List[str],
+    images_post: List[str],
+    dest: str,
+    maxpre: int,
+    maxpost: int,
+    max_threads: int = None,
 ) -> None:
-    print('downloading pre-disaster images')
-    for url in tqdm(images_pre[:min(len(images_pre), maxpre)]):
+    # wrapper function to pass to the threads
+    def _download(url, folder):
+        # create the progress bar
+        ident = threading.get_ident()
+        PROGRESS_BARS[ident] = tqdm(desc=f"Thread {ident}")
         name = url.split('/')[-1]
         cat = url.split('/')[-2]
-        name = cat+'-'+name
-        urllib.request.urlretrieve(url, dest+'/pre-event/'+name, reporthook)
+        name = f"{cat}-{name}"
+        urllib.request.urlretrieve(url, os.path.join(folder, name), reporthook)
 
-    print('downloading post-disaster images')
-    for url in tqdm(images_post[:min(len(images_post), maxpost)]):
-        name = url.split('/')[-1]
-        cat = url.split('/')[-2]
-        name = cat + '-' + name
-        urllib.request.urlretrieve(url, dest + '/post-event/' + name, reporthook)
+    pre_paths = [os.path.join(dest, "pre-event")] * len(images_pre)
+    post_paths = [os.path.join(dest, "post-event")] * len(images_post)
+    with ThreadPoolExecutor(max_workers=max_threads) as executor:
+        # wrap in a `list` call to trigger execution, since we don't care about the outputs
+        list(
+            executor.map(
+                _download,
+                images_pre + images_post,
+                pre_paths + post_paths,
+            )
+        )
 
 
 @click.command()
@@ -82,6 +96,10 @@ def main(disaster, dest, maxpre, maxpost):
 
     urls = get_maxar_image_urls(disaster)
     images_pre, images_post = intersect_pre_post(urls)
+    print("Selected pre-images:")
+    print("\n".join(images_pre))
+    print("Selected post-images:")
+    print("\n".join(images_post))
     download_images(images_pre, images_post, dest, maxpre, maxpost)
 
 
