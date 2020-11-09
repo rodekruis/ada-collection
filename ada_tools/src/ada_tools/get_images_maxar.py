@@ -5,7 +5,7 @@ import time
 import click
 import os
 from tqdm import tqdm
-from typing import List
+from typing import List, Tuple
 
 
 def reporthook(count, block_size, total_size):
@@ -41,29 +41,29 @@ def get_maxar_image_urls(disaster: str) -> List[str]:
     ]
 
 
-def download_images(urls: List[str], dest: str, maxpre: int, maxpost: int) -> None:
-    images_pre = [x for x in urls if 'pre-' in x.split('/')[-4]]
-    images_post = [x for x in urls if 'post-' in x.split('/')[-4]]
-    print('total pre-disaster images:', len(images_pre))
-    print('total post-disaster images:', len(images_post))
-
-    print('selecting intersection of pre- and post-disaster sets (images that are in both)')
+def intersect_pre_post(images: List[str]) -> Tuple[List[str], List[str]]:
+    images_pre = [x for x in images if 'pre-' in x.split('/')[-4]]
+    images_post = [x for x in images if 'post-' in x.split('/')[-4]]
     images_pre_selected = [x for x in images_pre if x.split('/')[-1] in [x.split('/')[-1] for x in images_post]]
     images_post_selected = [x for x in images_post if x.split('/')[-1] in [x.split('/')[-1] for x in images_pre]]
     images_pre_selected = sorted(images_pre_selected, key=lambda x: x.split('/')[-1])
     images_post_selected = sorted(images_post_selected, key=lambda x: x.split('/')[-1])
-    print('selected pre-disaster images:', len(images_pre_selected))
-    print('selected post-disaster images:', len(images_post_selected))
 
+    return images_pre_selected, images_post_selected
+
+
+def download_images(
+    images_pre: List[str], images_post: List[str], dest: str, maxpre: int, maxpost: int
+) -> None:
     print('downloading pre-disaster images')
-    for url in tqdm(images_pre_selected[:min(len(images_pre_selected), maxpre)]):
+    for url in tqdm(images_pre[:min(len(images_pre), maxpre)]):
         name = url.split('/')[-1]
         cat = url.split('/')[-2]
         name = cat+'-'+name
         urllib.request.urlretrieve(url, dest+'/pre-event/'+name, reporthook)
 
     print('downloading post-disaster images')
-    for url in tqdm(images_post_selected[:min(len(images_post_selected), maxpost)]):
+    for url in tqdm(images_post[:min(len(images_post), maxpost)]):
         name = url.split('/')[-1]
         cat = url.split('/')[-2]
         name = cat + '-' + name
@@ -81,7 +81,8 @@ def main(disaster, dest, maxpre, maxpost):
     os.makedirs(dest+'/post-event', exist_ok=True)
 
     urls = get_maxar_image_urls(disaster)
-    download_images(urls, dest, maxpre, maxpost)
+    images_pre, images_post = intersect_pre_post(urls)
+    download_images(images_pre, images_post, dest, maxpre, maxpost)
 
 
 if __name__ == "__main__":
