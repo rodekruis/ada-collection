@@ -44,17 +44,12 @@ def split_pre_post(images: List[str]) -> Tuple[List[str], List[str]]:
 
 
 def download_images(
-    images_pre: List[str],
-    images_post: List[str],
-    dest: str,
+    images: List[Tuple[str, str]],
     max_threads: int = None,
     progress_format: float = 1e6
 ) -> None:
     """
-    images_pre: List of urls for pre-disaster images.
-    images_post: List of urls for post-disaster images.
-    dest: Destination folder. Pre-disaster images are downloaded to `dest`/pre-event,
-        post-disaster images to `dest`/post-event.
+    list: List of tuples of the form (url, destination path).
     max_threads: Maximum number of concurrent threads to download from. If None,
         Python's heuristics are used.
     progress_format: Download progress is printed as bytes / `progress_format`. For
@@ -67,19 +62,16 @@ def download_images(
         pbar.update(block_size / progress_format)
 
     # wrapper function to pass to the threads
-    def _download(url, folder):
+    def _download(url_tuple):
+        url, path = url_tuple
         # create the progress bar
         ident = threading.get_ident()
         PROGRESS_BARS[ident] = tqdm(desc=f"Thread {ident}")
-        name = url.split('/')[-1]
-        cat = url.split('/')[-2]
-        name = f"{cat}-{name}"
-        urllib.request.urlretrieve(url, os.path.join(folder, name), _reporthook)
 
-    pre_paths = [os.path.join(dest, "pre-event")] * len(images_pre)
-    post_paths = [os.path.join(dest, "post-event")] * len(images_post)
+        urllib.request.urlretrieve(url, path, _reporthook)
+
     with ThreadPoolExecutor(max_workers=max_threads) as executor:
-        executor.map(_download, images_pre + images_post, pre_paths + post_paths)
+        executor.map(_download, images)
 
 
 
@@ -118,10 +110,15 @@ def main(disaster, dest, maxpre, maxpost, maxthreads, progress_format):
     print("\n".join(images_post))
 
     size_numerator = {"B": 1, "KB": 1e3, "MB": 1e6, "GB": 1e9}.get(progress_format)
+
+    # generate the destination paths
+    paths = (
+        [(url, os.path.join(dest, "pre-event", url.split("/")[-1])) for url in images_pre] +
+        [(url, os.path.join(dest, "post-event", url.split("/")[-1])) for url in images_post]
+    )
+
     download_images(
-        images_pre=images_pre,
-        images_post=images_post,
-        dest=dest,
+        images=paths,
         max_threads=maxthreads,
         progress_format=size_numerator,
     )
