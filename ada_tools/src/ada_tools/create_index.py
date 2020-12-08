@@ -284,27 +284,18 @@ def generate_tiles(gdf: gpd.GeoDataFrame, zoom: int) -> gpd.GeoDataFrame:
     return gdf_tiles
 
 
-def assign_images_to_tiles(df_tiles: gpd.GeoDataFrame, gdf: gpd.GeoDataFrame) -> str:
+def assign_images_to_tiles(
+    df_tiles: gpd.GeoDataFrame, gdf: gpd.GeoDataFrame
+) -> gpd.GeoDataFrame:
     """
     For each tile, specify which images it can be obtained from.
+    Adds a "pre-event" and "post-event" column to `df_tiles`.
 
     Arguments:
       df_tiles: The output of `generate_tiles`.
       gdf: The output of `get_extents`.
 
-    Returns: A JSON string, representing a dictionary mapping tile id's to the pre- and
-    post-disaster images in which to find that tile. For example:
-    {
-      "12.1814.1237": {
-        "pre-event": [
-          "10300100AA94E000.tif"
-        ],
-        "post-event": [
-          "104001006131E200.tif"
-       ]
-      },
-      ...
-    }
+    Returns the `df_tiles` input argument.
     """
     df_tiles['pre-event'] = [[] for x in range(len(df_tiles))]
     df_tiles['post-event'] = [[] for x in range(len(df_tiles))]
@@ -330,35 +321,33 @@ def assign_images_to_tiles(df_tiles: gpd.GeoDataFrame, gdf: gpd.GeoDataFrame) ->
     # drop tiles that do not contain both pre- and post-event images
     df_tiles = df_tiles[(~pd.isna(df_tiles['pre-event'])) & (~pd.isna(df_tiles['post-event']))]
 
-    df_tiles = df_tiles[['tile', 'pre-event', 'post-event']]
-    df_tiles.index = df_tiles.tile
-    df_tiles = df_tiles.drop(columns=['tile'])
-    return df_tiles.to_json(orient='index', default_handler=str)
+    # The pre-event and post-event columns contain lists of filenames, but geopandas
+    # doesn't allow lists as GeoJSON properties to maintain compatibility with
+    # shapefiles. We can work around this by converting them to dictionaries.
+    df_tiles.loc[:, "pre-event"] = df_tiles["pre-event"].map(lambda l: dict(enumerate(l)))
+    df_tiles.loc[:, "post-event"] = df_tiles["post-event"].map(lambda l: dict(enumerate(l)))
+
+    return df_tiles
 
 
 @click.command()
 @click.option('--data', default='input', help='input')
 @click.option('--date', default='2020-08-04', help='date of the event (to divide pre- and post-disaster images)')
 @click.option('--zoom', default=12, help='zoom level of the tiles')
-@click.option('--dest', default='tile_index.json', help='output')
+@click.option('--dest', default='tile_index.geojson', help='output')
 def main(data, date, zoom, dest):
     """
-    Using the images in the `data` folder, divide the area into tiles.
-    The output written to `dest` is a json file representing a dictionary mapping tile
-    id's to the pre- and post-disaster images in which to find that tile. 
-    The id is descriptive enough to be able to recreate the tile's geometry; the format
-    is <zoom level>.<x coordinate>.<y coordinate>.
+    Using the images in the `data` folder, divide the area into tiles.  The output
+    written to `dest` is a GeoJSON file containing a collection of tiles, each with a
+    unique id and the paths the pre- and post-disaster images overlapping the tile.
     """
-
     date_event = dateparser.parse(date)
 
     rasters_pre, rasters_post = divide_images(data, date)
     gdf = get_extents(rasters_pre, rasters_post)
     df_tiles = generate_tiles(gdf, zoom)
-    json = assign_images_to_tiles(df_tiles, gdf)
-
-    with open(dest, "w") as f:
-        f.write(json)
+    df_tiles = assign_images_to_tiles(df_tiles, gdf)
+    df_tiles.to_file(dest, driver="GeoJSON")
 
 
 if __name__ == "__main__":
