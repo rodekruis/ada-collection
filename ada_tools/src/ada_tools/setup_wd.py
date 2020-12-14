@@ -12,7 +12,11 @@ import os
 import click
 import json
 import sys
-from typing import List, NamedTuple
+from typing import Callable, List, NamedTuple
+import rasterio
+from rasterio.enums import Resampling
+import numpy as np
+from tqdm import tqdm
 
 
 class Tile(NamedTuple):
@@ -28,15 +32,98 @@ class Tile(NamedTuple):
     top: float
 
 
-def create_raster_mosaic(tile: Tile, data: str) -> None:
+def first_non_nan_pixel(img: np.ndarray) -> np.ndarray:
+    "Aggregation function returning the first pixel value that's not nan."
+    out = np.zeros(img.shape[1:])
+    out[...] = np.nan
+    for i in range(img.shape[0]):
+        mask = np.isnan(out)
+        out[mask] = img[i, mask]
+
+    return out
+
+
+def create_raster_mosaic(
+    tile: Tile,
+    data: str,
+    agg: Callable[[np.ndarray], np.ndarray] = first_non_nan_pixel
+) -> None:
+    """
+    Create a mosaic of multiple raster images, cropped to a given tile.
+
+    Args:
+      tile: The tile to crop to.
+      data: A folder containing the tif files to be mosaiced.
+      agg: An aggregation function to combine the partially-overlapping rasters. If the
+           `data` folder contains n images from which an (c, h, w) shaped window is read
+           (c being the number of color channels, h the width and w the height), the
+           input to the aggregation function will be an (n, c, h, w) shaped array
+           containing NaN values for cases where part of a window fell outside of the
+           image. The output of the function should then be (c, h, w). While it's
+           tempting to use the average pixel value (i.e. np.nanmean), this is a bad
+           idea; a pixel that's for example blue in one image because it's water could
+           be white in another image because there's a cloud covering it. In this case,
+           taking the mean will result in an unnatural gray color that would never be
+           the true pixel color.
+    """
     filenames = os.listdir(os.path.join(data))
+
+    src_files = [os.path.join(data, name) for name in filenames]
     out_file = os.path.join(data, "merged.tif")
 
-    # clip using gdalwarp's -te flag, which takes a bounding box in x_min, y_min, x_max,
-    # y_max format
-    clip_str = f"-te {tile.left} {tile.bottom} {tile.right} {tile.top}"
-    src_files = " ".join(os.path.join(data, name) for name in filenames)
-    os.system(f"gdalwarp {clip_str} -r average {src_files} {out_file}")
+    rasters = []
+
+    # The array size (out_shape) will be taken from the first image, along with a
+    # corresponding profile (the set of metadata particular to that image) and. 
+    # `transform` refers to an affine transformation matrix mapping pixel coordinates to
+    # world coordinates, and will be calculated once the first window is generated.
+    out_shape = None
+    profile = None
+    transform = None
+
+    for path in tqdm(src_files, desc="Reading tif files"):
+        with rasterio.open(path, "r") as f:
+            # Calculate the boundary of the tile in pixel coordinates.
+            window =f.window(
+                tile.left, tile.bottom, tile.right, tile.top
+            )
+
+            # Read image data from the given window.
+            # When `boundless` is True, parts of the window that fall outside of the
+            # raster are given the `fill_value` value; this gives us consistently-sized
+            # arrays to work with. When the image's dtype is uint8, which Maxar images
+            # generally seem to be, there is no available fill_value that couldn't also
+            # be a valid pixel value. Therefore we read it as a float and set the
+            # fill_value to np.nan so that we can easily disregard them when generating
+            # the mosaic.
+            #
+            # The images also tend to have slight differences in resolution, leading to
+            # different array sizes. With the `out_shape` explicitly set, it rescales
+            # the image to fit that shape.
+            raster = f.read(
+                window=window,
+                boundless=True,
+                out_shape=out_shape,
+                fill_value=np.nan,
+                out_dtype=np.float32,
+                resampling=Resampling.lanczos,
+            )
+
+            if out_shape is None:
+                out_shape = raster.shape
+                profile = f.profile
+                transform = f.window_transform(window)
+            rasters.append(raster)
+
+    # create the mosaic and convert it from float back to the original dtype
+    mosaic = agg(np.stack(rasters, axis=0))
+    mosaic = mosaic.astype(profile["dtype"])
+
+    # update the profile with the new shape and affine transform
+    profile.update(height=mosaic.shape[1], width=mosaic.shape[2], transform=transform)
+
+    with rasterio.open(out_file, "w", **profile) as f:
+        f.write(mosaic)
 
 
 def get_tile(df: gpd.GeoDataFrame, id: str) -> Tile:
