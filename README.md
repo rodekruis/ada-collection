@@ -14,6 +14,8 @@ This repo is intended to be used to build a Docker image for usage in Azure Batc
 
 To build and push the docker image, run:
 ```bash
+az login
+az acr login -n ada510.azurecr.io
 docker build -t ada510.azurecr.io/neo:latest .
 docker push ada510.azurecr.io/neo:latest
 ```
