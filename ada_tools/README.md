@@ -3,7 +3,22 @@
 Scripts to download/transform pre- and post-disaster images, adapted from 
 https://github.com/jmargutt/ADA_tools.
 
-### Major differences
+
+## Description of pipeline
+
+### load-images
+Download geotif images from the Maxar opendata website.
+
+### create-index
+Divide the area spanned by the downloaded images into tiles and
+generate a json file assigning each tile to a the image it can be found in.
+
+![Example of generated tiles](tiles.png?raw=true)
+
+### setup-wd
+TODO
+
+## Major differences
 
 - Data processing scripts moved one level up, directly into `ada_tools` folder
 - Added new entrypoints in `setup.py`:
@@ -17,7 +32,7 @@ https://github.com/jmargutt/ADA_tools.
     Run `<command> --help` to see available arguments.
 
 
-### Notes on installation
+## Notes on installation
 - `GDAL` dependency often causes issues and has to be installed separately;
 system requirements need to be installed first and `GDAL` python library version
 has to match that of local installation.

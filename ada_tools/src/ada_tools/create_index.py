@@ -11,6 +11,8 @@ import os
 import re
 import datetime
 import dateparser
+import json
+from typing import List, Tuple, Optional
 
 
 class Tile():
@@ -149,22 +151,19 @@ def parse_date_in_filename(filename):
     return datetime.datetime(int(year), int(month), int(day))
 
 
-@click.command()
-@click.option('--data', default='input', help='input')
-@click.option('--date', default='2020-08-04', help='date of the event (to divide pre- and post-disaster images)')
-@click.option('--zoom', default=12, help='zoom level of the tiles')
-@click.option('--dest', default='tile_index.json', help='output')
-def main(data, date, zoom, dest):
-
-    date_event = dateparser.parse(date)
-
-    ## DIVIDE PRE- AND POST-DISASTER IMAGES
-
-    if os.path.exists(os.path.join(data, 'pre-event')) and os.path.exists(os.path.join(data, 'post-event')):
-        rasters_pre = get_raster_in_dir(os.path.join(data, 'pre-event'))
-        rasters_post = get_raster_in_dir(os.path.join(data, 'post-event'))
+def divide_images(
+    folder: str, date: Optional[datetime.datetime]
+) -> Tuple[List[str], List[str]]:
+    """
+    Divide images into pre- and post-disaster images, based on either the folder
+    structure or on the date of the disaster. Returns two lists, the first with
+    pre-disaster image paths and the second with post-disaster image paths.
+    """
+    if os.path.exists(os.path.join(folder, 'pre-event')) and os.path.exists(os.path.join(folder, 'post-event')):
+        rasters_pre = get_raster_in_dir(os.path.join(folder, 'pre-event'))
+        rasters_post = get_raster_in_dir(os.path.join(folder, 'post-event'))
     else:
-        rasters_all = get_raster_in_dir(data)
+        rasters_all = get_raster_in_dir(folder)
         rasters_pre, rasters_post = [], []
         for raster in rasters_all:
             filename = os.path.split(raster)[-1]
@@ -173,15 +172,30 @@ def main(data, date, zoom, dest):
                 rasters_pre.append(raster)
             else:
                 rasters_post.append(raster)
+
     if len(rasters_pre) == 0 or len(rasters_post) == 0:
-        print('ERROR: cannot divide pre- and post-event images')
-        return 0
+        raise Exception('ERROR: cannot divide pre- and post-event images')
 
-    rasters_all = rasters_pre+rasters_post
+    return rasters_pre, rasters_post
 
-    ## CALCULATE GEOGRAPHICAL EXTENT OF RASTERS
 
-    # get bounds and CRS of all rasters
+def get_extents(rasters_pre: List[str], rasters_post: List[str]) -> gpd.GeoDataFrame:
+    """
+    Get the geographical boundary of each raster image.
+    All rasters are assumed to use the same CRS (coordinate reference system). No
+    conversion is done if different CRSes are encountered; an exception will be thrown
+    instead.
+
+    Arguments:
+      rasters_pre: list of pre-disaster image paths
+      rasters_post: list of post-disaster image paths
+
+    Returns a Geopandas dataframe with the following columns:
+    - geometry: The corner points of the raster as a list of [left, bottom, right, top].
+    - file: The path of this raster.
+    - pre-post: The string 'pre-event' or 'post-event' indicating when the image was taken.
+    """
+    rasters_all = rasters_pre + rasters_post
     df = pd.DataFrame()
     for raster in rasters_all:
         with rasterio.open(raster) as raster_meta:
@@ -208,9 +222,7 @@ def main(data, date, zoom, dest):
                 }), ignore_index=True)
 
     if len(df.crs.unique()) > 1:
-        print('ERROR: multiple CRS found')
-        print(df.crs.unique())
-        return 0
+        raise Exception(f'ERROR: multiple CRS found: {df.crs.unique()}')
 
     crs_proj = df.crs.unique()[0]
     gdf = gpd.GeoDataFrame({'geometry': df.geometry.tolist(),
@@ -218,35 +230,76 @@ def main(data, date, zoom, dest):
                             'pre-post': df['pre-post'].tolist()},
                            crs=crs_proj)
 
-    ## CALCULATE TILES
+    return gdf
 
-    # convert to WGS84 (EPSG:4326) to calculate tiles
+
+def generate_tiles(gdf: gpd.GeoDataFrame, zoom: int) -> gpd.GeoDataFrame:
+    """
+    Generate tiles over the area spanned by the areas in `gdf`.
+
+    Arguments:
+      gdf: A Geopandas dataframe as returned by `get_extents`.
+      zoom: Specifies the size of the tiles. The value `12` corresponds to a tilesize of
+            around 380 km2. For further details, see the `TileCollection` class.
+
+    Returns a Geopandas dataframe with the following columns:
+    - geometry: The bounding box of the tile.
+    - tile: A string uniquely defining the tile.
+    """
+    # Convert to WGS84 (EPSG:4326, the usual degrees of latitude and longitude) and get
+    # the total area (i.e. the union of all bounding boxes).
+    orig_crs = gdf.crs
     gdf_wgs = gdf.to_crs('EPSG:4326')
     total_bounds = box(*gdf_wgs.total_bounds)
 
-    # calculate tiles
+    # Divide the area of `total_bounds` into tiles with their size determined by the
+    # `zoom` parameter.
     zoom_level = zoom  # default 12, corresponding to tiles of area ~380 km2
     tc = TileCollection()
     tc.generate_tiles(total_bounds, zoom_level)
 
-    # create GeoDataFrame of tiles
+    # create DataFrame of tiles
     df_tiles = pd.DataFrame()
     for tile in tc:
         bounds_tile = np.array([tile.xmin, tile.ymin, tile.xmax, tile.ymax])
-        df_tiles = df_tiles.append(pd.Series({'geometry': box(*bounds_tile),
-                                              'tile': str(zoom_level)+'.'+str(tile.x)+'.'+str(tile.y)}),
-                                   ignore_index=True)
-    gdf_tiles = gpd.GeoDataFrame({'geometry': df_tiles.geometry.tolist(),
-                                  'tile': df_tiles.tile.tolist()},
-                                 crs='EPSG:4326')
-    # convert back to original CRS
-    gdf_tiles = gdf_tiles.to_crs(crs_proj)
+        df_tiles = df_tiles.append(
+            pd.Series(
+                {
+                    'geometry': box(*bounds_tile),
+                    'tile': str(zoom_level)+'.'+str(tile.x)+'.'+str(tile.y)
+                }
+            ),
+            ignore_index=True
+        )
 
-    ## ASSIGN IMAGES TO TILES
+    # convert to GeoDataFrame
+    gdf_tiles = gpd.GeoDataFrame(
+        {'geometry': df_tiles.geometry.tolist(), 'tile': df_tiles.tile.tolist()},
+        crs='EPSG:4326',
+    )
 
+    # convert back from EPSG:4326 to whatever the default was
+    gdf_tiles = gdf_tiles.to_crs(orig_crs)
+
+    return gdf_tiles
+
+
+def assign_images_to_tiles(
+    df_tiles: gpd.GeoDataFrame, gdf: gpd.GeoDataFrame
+) -> gpd.GeoDataFrame:
+    """
+    For each tile, specify which images it can be obtained from.
+    Adds a "pre-event" and "post-event" column to `df_tiles`.
+
+    Arguments:
+      df_tiles: The output of `generate_tiles`.
+      gdf: The output of `get_extents`.
+
+    Returns the `df_tiles` input argument.
+    """
     df_tiles['pre-event'] = [[] for x in range(len(df_tiles))]
     df_tiles['post-event'] = [[] for x in range(len(df_tiles))]
-    for ixt, rowt in gdf_tiles.iterrows():
+    for ixt, rowt in df_tiles.iterrows():
         pre_event_images, post_event_images = [], []
         for ix, row in gdf.iterrows():
             bounds_image = rasterio.coords.BoundingBox(*row['geometry'].bounds)
@@ -268,10 +321,33 @@ def main(data, date, zoom, dest):
     # drop tiles that do not contain both pre- and post-event images
     df_tiles = df_tiles[(~pd.isna(df_tiles['pre-event'])) & (~pd.isna(df_tiles['post-event']))]
 
-    df_tiles = df_tiles[['tile', 'pre-event', 'post-event']]
-    df_tiles.index = df_tiles.tile
-    df_tiles = df_tiles.drop(columns=['tile'])
-    df_tiles.to_json(dest, orient='index', default_handler=str)
+    # The pre-event and post-event columns contain lists of filenames, but geopandas
+    # doesn't allow lists as GeoJSON properties to maintain compatibility with
+    # shapefiles. We can work around this by converting them to dictionaries.
+    df_tiles.loc[:, "pre-event"] = df_tiles["pre-event"].map(lambda l: dict(enumerate(l)))
+    df_tiles.loc[:, "post-event"] = df_tiles["post-event"].map(lambda l: dict(enumerate(l)))
+
+    return df_tiles
+
+
+@click.command()
+@click.option('--data', default='input', help='input')
+@click.option('--date', default='2020-08-04', help='date of the event (to divide pre- and post-disaster images)')
+@click.option('--zoom', default=12, help='zoom level of the tiles')
+@click.option('--dest', default='tile_index.geojson', help='output')
+def main(data, date, zoom, dest):
+    """
+    Using the images in the `data` folder, divide the area into tiles.  The output
+    written to `dest` is a GeoJSON file containing a collection of tiles, each with a
+    unique id and the paths the pre- and post-disaster images overlapping the tile.
+    """
+    date_event = dateparser.parse(date)
+
+    rasters_pre, rasters_post = divide_images(data, date)
+    gdf = get_extents(rasters_pre, rasters_post)
+    df_tiles = generate_tiles(gdf, zoom)
+    df_tiles = assign_images_to_tiles(df_tiles, gdf)
+    df_tiles.to_file(dest, driver="GeoJSON")
 
 
 if __name__ == "__main__":
