@@ -152,7 +152,7 @@ def parse_date_in_filename(filename):
 
 
 def divide_images(
-    folder: str, date: Optional[datetime.datetime]
+    folder: str, date_event: Optional[datetime.datetime]
 ) -> Tuple[List[str], List[str]]:
     """
     Divide images into pre- and post-disaster images, based on either the folder
@@ -344,8 +344,7 @@ def main(data, date, zoom, dest):
     unique id and the paths the pre- and post-disaster images overlapping the tile.
     """
     date_event = dateparser.parse(date)
-
-    rasters_pre, rasters_post = divide_images(data, date)
+    rasters_pre, rasters_post = divide_images(data, date_event)
     gdf = get_extents(rasters_pre, rasters_post)
     df_tiles = generate_tiles(gdf, zoom)
     df_tiles = assign_images_to_tiles(df_tiles, gdf)
