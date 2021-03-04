@@ -162,6 +162,8 @@ def divide_images(
     if os.path.exists(os.path.join(folder, 'pre-event')) and os.path.exists(os.path.join(folder, 'post-event')):
         rasters_pre = get_raster_in_dir(os.path.join(folder, 'pre-event'))
         rasters_post = get_raster_in_dir(os.path.join(folder, 'post-event'))
+        rasters_pre = [os.path.join('pre-event', x) for x in rasters_pre]
+        rasters_post = [os.path.join('post-event', x) for x in rasters_post]
     else:
         rasters_all = get_raster_in_dir(folder)
         rasters_pre, rasters_post = [], []

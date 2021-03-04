@@ -336,10 +336,16 @@ def main():
         help="input data path",
     )
     parser.add_argument(
+        "--buildings",
+        type=str,
+        required=True,
+        help="vector file with buildings",
+    )
+    parser.add_argument(
         "--dest",
         type=str,
         required=True,
-        help="input data path",
+        help="output data path",
     )
     parser.add_argument(
         "--create-image-stamps",
@@ -357,7 +363,7 @@ def main():
     BEFORE_FOLDER = os.path.join(ROOT_DIRECTORY, "pre-event").replace("\\", "/")
     AFTER_FOLDER = os.path.join(ROOT_DIRECTORY, "post-event").replace("\\", "/")
 
-    GEOJSON_FILE = os.path.join(ROOT_DIRECTORY, "buildings.geojson").replace("\\", "/")
+    GEOJSON_FILE = args.buildings
 
     # input
     VERSION_FILE_NAME = "VERSION"
