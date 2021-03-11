@@ -24,7 +24,7 @@ def get_maxar_image_urls(disaster: str) -> List[str]:
     urls. Written on 2020-11-03, will probably break in the future due to the nature of
     webpages.
     """
-    base_url = 'https://www.digitalglobe.com/ecosystem/open-data/' + disaster
+    base_url = 'https://www.maxar.com/open-data/' + disaster
     response = urllib.request.urlopen(base_url)
     html = response.read()
     html_soup = BeautifulSoup(html, 'html.parser')
