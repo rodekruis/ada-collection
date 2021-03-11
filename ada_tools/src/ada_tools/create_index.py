@@ -343,7 +343,7 @@ def main(data, date, zoom, dest):
     written to `dest` is a GeoJSON file containing a collection of tiles, each with a
     unique id and the paths the pre- and post-disaster images overlapping the tile.
     """
-    date_event = dateparser.parse(date)
+    date_event = datetime.datetime.strptime(date, "%Y-%m-%d")
     rasters_pre, rasters_post = divide_images(data, date_event)
     gdf = get_extents(rasters_pre, rasters_post)
     df_tiles = generate_tiles(gdf, zoom)

@@ -12,7 +12,8 @@ python filter_buildings.py
 
 # classify damage
 python prepare_data_for_caladrius.py --data ~/datalake/maxar/typhoon-mangkhut/processed --dest ~/datalake/maxar/typhoon-mangkhut/caladrius
-python ~/caladrius-master/caladrius/run.py --run-name caladrius_2020 --data-path ~/datalake/maxar/typhoon-mangkhut-2/caladrius --model-path ~/datalake/caladrius-models/all_wind_class_10_epochs-input_size_32-learning_rate_0.001-batch_size_16/best_model_wts.pkl --checkpoint-path ~/datalake/maxar/typhoon-mangkhut-2/caladrius/runs --input-type classification --inference
+source activate cal
+python ~/caladrius/caladrius/run.py --run-name caladrius_2020 --data-path ~/datalake/maxar/typhoon-mangkhut-2/caladrius --model-path ~/datalake/caladrius-models/all_wind_class_10_epochs-input_size_32-learning_rate_0.001-batch_size_16/best_model_wts.pkl --checkpoint-path ~/datalake/maxar/typhoon-mangkhut-2/caladrius/runs --input-type classification --inference
 
 # create final geodataframe
 python final_layer.py
