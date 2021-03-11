@@ -213,7 +213,7 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str]) -> gpd.GeoDataF
                 tag = 'pre-event'
             else:
                 tag = 'post-event'
-            raster_root = os.path.split(raster)[1]
+            raster_root = raster  # os.path.split(raster)[1]
             df = df.append(pd.Series({
                     'file': raster_root,
                     'crs': crs.to_dict()['init'],
