@@ -56,8 +56,8 @@ class TileCollection(list):
         self.geom = geom
         self.extent = geom.bounds
 
-        from_tile = self.deg2tile(self.extent[0], self.extent[1], z)
-        to_tile = self.deg2tile(self.extent[2], self.extent[3], z)
+        from_tile = self.deg2tile(self.extent[1], self.extent[0], z)
+        to_tile = self.deg2tile(self.extent[3], self.extent[2], z)
         x_start = min(from_tile[0], to_tile[0])
         x_end = max(from_tile[0], to_tile[0])
         y_start = min(from_tile[1], to_tile[1])
@@ -120,15 +120,14 @@ class TileCollection(list):
         n = 2.0 ** zoom
         xtile = int((lon_deg + 180.0) / 360.0 * n)
         ytile = int((1.0 - math.log(math.tan(lat_rad) + (1.0 / math.cos(lat_rad))) / math.pi) / 2.0 * n)
-
         return (xtile, ytile)
 
     def tileGeometry(self, x, y, z):
         n = 2.0 ** z
-        ymin = x / n * 360.0 - 180.0
-        ymax = (x + 1) / n * 360.0 - 180
-        xmin = math.degrees(math.atan(math.sinh(math.pi * (1 - 2 * y / n))))
-        xmax = math.degrees(math.atan(math.sinh(math.pi * (1 - 2 * (y + 1) / n))))
+        xmin = x / n * 360.0 - 180.0
+        xmax = (x + 1) / n * 360.0 - 180
+        ymin = math.degrees(math.atan(math.sinh(math.pi * (1 - 2 * y / n))))
+        ymax = math.degrees(math.atan(math.sinh(math.pi * (1 - 2 * (y + 1) / n))))
         return Tile(xmin, ymin, xmax, ymax, x, y, z)
 
 
