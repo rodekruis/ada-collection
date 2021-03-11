@@ -32,7 +32,8 @@ setuptools.setup(
             f"final-layer = {PROJECT_NAME}.final_layer:main",
             f"prepare-data = {PROJECT_NAME}.prepare_data_for_caladrius:main",
             f"create-index = {PROJECT_NAME}.create_index:main",
-            f"setup-wd = {PROJECT_NAME}.setup_wd:main"
+            f"setup-wd = {PROJECT_NAME}.setup_wd:main",
+            f"merge-output = {PROJECT_NAME}.merge_output:main"
         ]
     }
 )
