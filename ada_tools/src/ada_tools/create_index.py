@@ -10,7 +10,6 @@ import pandas as pd
 import os
 import re
 import datetime
-import dateparser
 import json
 from typing import List, Tuple, Optional
 
