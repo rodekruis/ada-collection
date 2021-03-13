@@ -179,7 +179,7 @@ def divide_images(
     return rasters_pre, rasters_post
 
 
-def get_extents(rasters_pre: List[str], rasters_post: List[str]) -> gpd.GeoDataFrame:
+def get_extents(data: str, rasters_pre: List[str], rasters_post: List[str]) -> gpd.GeoDataFrame:
     """
     Get the geographical boundary of each raster image.
     All rasters are assumed to use the same CRS (coordinate reference system). No
@@ -213,9 +213,9 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str]) -> gpd.GeoDataF
                 tag = 'pre-event'
             else:
                 tag = 'post-event'
-            raster_root = raster  # os.path.split(raster)[1]
+            raster_relative_data = raster.replace(data, '')  # raster path relative to data path
             df = df.append(pd.Series({
-                    'file': raster_root,
+                    'file': raster_relative_data,
                     'crs': crs.to_dict()['init'],
                     'geometry': box(*bounds),
                     'pre-post': tag
@@ -343,7 +343,7 @@ def main(data, date, zoom, dest):
     """
     date_event = datetime.datetime.strptime(date, "%Y-%m-%d")
     rasters_pre, rasters_post = divide_images(data, date_event)
-    gdf = get_extents(rasters_pre, rasters_post)
+    gdf = get_extents(data, rasters_pre, rasters_post)
     df_tiles = generate_tiles(gdf, zoom)
     df_tiles = assign_images_to_tiles(df_tiles, gdf)
     df_tiles.to_file(dest, driver="GeoJSON")
