@@ -215,6 +215,8 @@ def get_extents(data: str, rasters_pre: List[str], rasters_post: List[str]) -> g
             else:
                 tag = 'post-event'
             raster_str = str(raster)
+            print(raster_str)
+            print(path.parent.name, path.name)
             path = pathlib.PurePath(raster_str)
             if 'pre-event' in path.parent.name or 'post-event' in path.parent.name:
                 raster_relative_data = os.path.join(path.parent.name, path.name)
