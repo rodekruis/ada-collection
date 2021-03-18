@@ -12,6 +12,7 @@ import re
 import datetime
 import json
 from typing import List, Tuple, Optional
+import pathlib
 
 
 class Tile():
@@ -213,7 +214,12 @@ def get_extents(data: str, rasters_pre: List[str], rasters_post: List[str]) -> g
                 tag = 'pre-event'
             else:
                 tag = 'post-event'
-            raster_relative_data = raster.replace(data, '')  # raster path relative to data path
+            raster_str = str(raster)
+            path = pathlib.PurePath(raster_str)
+            if 'pre-event' in path.parent.name or 'post-event' in path.parent.name:
+                raster_relative_data = os.path.join(path.parent.name, path.name)
+            else:
+                raster_relative_data = path.name
             df = df.append(pd.Series({
                     'file': raster_relative_data,
                     'crs': crs.to_dict()['init'],
