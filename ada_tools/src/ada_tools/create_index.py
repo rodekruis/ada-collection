@@ -222,6 +222,8 @@ def get_extents(data: str, rasters_pre: List[str], rasters_post: List[str]) -> g
                 raster_relative_data = os.path.join(path.parent.name, path.name)
             else:
                 raster_relative_data = path.name
+            raster_relative_data = str(raster_relative_data)
+            print(raster_relative_data)
             df = df.append(pd.Series({
                     'file': raster_relative_data,
                     'crs': crs.to_dict()['init'],
