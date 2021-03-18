@@ -215,15 +215,12 @@ def get_extents(data: str, rasters_pre: List[str], rasters_post: List[str]) -> g
             else:
                 tag = 'post-event'
             raster_str = str(raster)
-            print(raster_str)
             path = pathlib.PurePath(raster_str)
-            print(path.parent.name, path.name)
             if 'pre-event' in path.parent.name or 'post-event' in path.parent.name:
                 raster_relative_data = os.path.join(path.parent.name, path.name)
             else:
                 raster_relative_data = path.name
             raster_relative_data = str(raster_relative_data)
-            print(raster_relative_data)
             df = df.append(pd.Series({
                     'file': raster_relative_data,
                     'crs': crs.to_dict()['init'],

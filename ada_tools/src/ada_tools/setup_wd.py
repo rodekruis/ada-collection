@@ -157,10 +157,14 @@ def main(data, index, id, dest):
     for image in tile.pre_event:
         img_path = os.path.expanduser(os.path.join(dest, 'pre-event'))
         os.makedirs(img_path, exist_ok=True)
+        if 'pre-event' in image:
+            img_path = os.path.expanduser(dest)
         copyfile(os.path.join(data, image), os.path.join(img_path, image))
     for image in tile.post_event:
         img_path = os.path.expanduser(os.path.join(dest, 'post-event'))
         os.makedirs(img_path, exist_ok=True)
+        if 'post-event' in image:
+            img_path = os.path.expanduser(dest)
         copyfile(os.path.join(data, image), os.path.join(img_path, image))
 
     create_raster_mosaic(tile, os.path.join(dest, 'pre-event'))
