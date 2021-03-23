@@ -3,6 +3,7 @@ import click
 import math
 from tqdm import tqdm
 import os
+import shutil
 
 SPLIT_SIZE = 1000
 
@@ -16,6 +17,9 @@ def main(data, dest, crsmeters, waterbodies, area):
     """ merge touching buildings, filter small ones, simplify geometry """
 
     gdf = gpd.read_file(data)
+    if len(gdf) == 0:
+        shutil.copyfile(data, dest)
+        return
 
     # merge touching buildings
     if len(gdf)>SPLIT_SIZE:
@@ -66,7 +70,7 @@ def main(data, dest, crsmeters, waterbodies, area):
     gdf = gdf[~(gdf.geometry.is_empty | gdf.geometry.isna())]
 
     # filter by water bodies
-    if os.path.exists(waterbodies):
+    if len(gdf) > 0 and os.path.exists(waterbodies):
         print('filtering by water bodies')
         gdf_water = gpd.read_file(waterbodies)
         if gdf.crs != gdf_water.crs:
@@ -74,6 +78,11 @@ def main(data, dest, crsmeters, waterbodies, area):
         gdf = gpd.sjoin(gdf, gdf_water, how='left', op='intersects')
         gdf = gdf[gdf['TYPE'].isna()]
         gdf = gdf[['geometry']]
+
+    if len(gdf) == 0:
+        with open(dest, "w") as text_file:
+            text_file.write('{"type": "FeatureCollection", "features": []}')
+        return
 
     # project to WGS84 and save
     if gdf.crs != "EPSG:4326":
