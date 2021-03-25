@@ -11,7 +11,7 @@ def main(dir, data, dest):
     gdf_merged = gpd.GeoDataFrame()
     for root, dirs, files in os.walk(dir):
         for file in files:
-            if file.contains(data):
+            if data in file:
                 gdf = gpd.read_file(file)
                 gdf_merged = gdf_merged.append(gdf, ignore_index=True)
     gdf_merged.to_file(dest)
