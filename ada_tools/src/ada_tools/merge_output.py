@@ -12,7 +12,7 @@ def main(dir, data, dest):
     for root, dirs, files in os.walk(dir):
         for file in files:
             if data in file:
-                gdf = gpd.read_file(file)
+                gdf = gpd.read_file(os.path.join(root, file))
                 gdf_merged = gdf_merged.append(gdf, ignore_index=True)
     gdf_merged.to_file(dest)
 
