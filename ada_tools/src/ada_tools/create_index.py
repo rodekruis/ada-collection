@@ -353,7 +353,10 @@ def main(data, date, zoom, dest, exte):
     rasters_pre, rasters_post = divide_images(data, date_event)
     gdf = get_extents(rasters_pre, rasters_post)
     if exte != '':
-        gdf.to_file(exte, driver="GeoJSON")
+        gdf_pre = gdf[gdf['pre-post']=='pre-event']
+        gdf_pre.to_file(exte.replace('.geojson', '-pre-event.geojson'), driver="GeoJSON")
+        gdf_pos = gdf[gdf['pre-post'] == 'post-event']
+        gdf_pos.to_file(exte.replace('.geojson', '-post-event.geojson'), driver="GeoJSON")
     df_tiles = generate_tiles(gdf, zoom)
     df_tiles = assign_images_to_tiles(df_tiles, gdf)
     df_tiles.to_file(dest, driver="GeoJSON")
