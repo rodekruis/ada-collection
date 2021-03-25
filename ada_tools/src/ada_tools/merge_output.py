@@ -14,7 +14,7 @@ def main(dir, data, dest):
             if data in file:
                 gdf = gpd.read_file(os.path.join(root, file))
                 gdf_merged = gdf_merged.append(gdf, ignore_index=True)
-    gdf_merged.to_file(dest)
+    gdf_merged.to_file(dest, driver="GeoJSON")
 
 
 if __name__ == "__main__":
