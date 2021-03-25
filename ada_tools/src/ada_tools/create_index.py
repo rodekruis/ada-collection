@@ -180,7 +180,7 @@ def divide_images(
     return rasters_pre, rasters_post
 
 
-def get_extents(data: str, rasters_pre: List[str], rasters_post: List[str]) -> gpd.GeoDataFrame:
+def get_extents(rasters_pre: List[str], rasters_post: List[str]) -> gpd.GeoDataFrame:
     """
     Get the geographical boundary of each raster image.
     All rasters are assumed to use the same CRS (coordinate reference system). No
@@ -342,7 +342,8 @@ def assign_images_to_tiles(
 @click.option('--date', default='2020-08-04', help='date of the event (to divide pre- and post-disaster images)')
 @click.option('--zoom', default=12, help='zoom level of the tiles')
 @click.option('--dest', default='tile_index.geojson', help='output')
-def main(data, date, zoom, dest):
+@click.option('--exte', default='', help='save extents as')
+def main(data, date, zoom, dest, exte):
     """
     Using the images in the `data` folder, divide the area into tiles.  The output
     written to `dest` is a GeoJSON file containing a collection of tiles, each with a
@@ -350,7 +351,9 @@ def main(data, date, zoom, dest):
     """
     date_event = datetime.datetime.strptime(date, "%Y-%m-%d")
     rasters_pre, rasters_post = divide_images(data, date_event)
-    gdf = get_extents(data, rasters_pre, rasters_post)
+    gdf = get_extents(rasters_pre, rasters_post)
+    if exte != '':
+        gdf.to_file(exte, driver="GeoJSON")
     df_tiles = generate_tiles(gdf, zoom)
     df_tiles = assign_images_to_tiles(df_tiles, gdf)
     df_tiles.to_file(dest, driver="GeoJSON")
