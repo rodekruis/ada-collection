@@ -1,4 +1,4 @@
-# Collection of tools for Automated Building Detection and Damage Assessment 
+# Tools for Automated Building Detection and Damage Assessment 
 
 This repo wraps two packages relevant for Automated Damage Assessment project:
 
