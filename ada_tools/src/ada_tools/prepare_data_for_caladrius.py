@@ -278,7 +278,7 @@ def create_inference_dataset(TEMP_DATA_FOLDER, TARGET_DATA_FOLDER):
     intersection = list(
         set(images_in_before_directory) & set(images_in_after_directory)
     )
-    print('images:', intersection)
+    # print('images:', intersection)
 
     inference_directory = os.path.join(TARGET_DATA_FOLDER, "inference").replace("\\","/")
     os.makedirs(inference_directory, exist_ok=True)
@@ -289,7 +289,7 @@ def create_inference_dataset(TEMP_DATA_FOLDER, TARGET_DATA_FOLDER):
     inference_after_directory = os.path.join(inference_directory, "after").replace("\\","/")
     os.makedirs(inference_after_directory, exist_ok=True)
 
-    for datapoint_name in intersection:
+    for datapoint_name in tqdm(intersection):
         before_image_src = os.path.join(temp_before_directory, datapoint_name).replace("\\","/")
         after_image_src = os.path.join(temp_after_directory, datapoint_name).replace("\\","/")
 

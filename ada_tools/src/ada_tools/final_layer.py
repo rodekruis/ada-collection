@@ -9,7 +9,8 @@ import numpy as np
 @click.option('--builds', help='input (buildings)')
 @click.option('--damage', help='input (damage classes)')
 @click.option('--out', default='buildings_predictions.geojson', help='input')
-def main(builds, damage, out):
+@click.option('--thresh', default=2, help='threshold to binarize output')
+def main(builds, damage, out, thresh):
     df = gpd.read_file(builds).to_crs(epsg="4326")
     df = df.loc[~df["geometry"].is_empty]
     if "OBJECTID" in df.columns:
@@ -23,7 +24,7 @@ def main(builds, damage, out):
         try:
             label = int(labels.loc[str(index), "label"])
             # binarize
-            if label > 2:
+            if label > thresh:
                 label = 1
             else:
                 label = 0
