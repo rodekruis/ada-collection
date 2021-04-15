@@ -177,7 +177,10 @@ def create_datapoints(df, ROOT_DIRECTORY, LABELS_FILE, TEMP_DATA_FOLDER):
     with open(LABELS_FILE, "w+") as labels_file:
         for geo_image_path in tqdm(image_list):
             with rasterio.open(geo_image_path) as geo_image_file:
-                df = df.to_crs(geo_image_file.crs)
+                try:
+                    df = df.to_crs(geo_image_file.crs)
+                except:
+                    df = df.to_crs("EPSG:4326")
                 for index, row in tqdm(df.iterrows(), total=df.shape[0]):
 
                     bounds = row["geometry"].bounds
@@ -190,14 +193,12 @@ def create_datapoints(df, ROOT_DIRECTORY, LABELS_FILE, TEMP_DATA_FOLDER):
                         object_id = index
 
                     image_path = get_image_path(geo_image_path, object_id, TEMP_DATA_FOLDER)
-                    # print(image_path, geometry, geo_image_file)
 
                     if not os.path.exists(image_path):
                         save_success = match_geometry(
                             image_path, geo_image_file, geometry
                         )
                         if save_success:
-                            logger.info("Saved image at {}".format(image_path))
                             count = count + 1
 
     delta = datetime.datetime.now() - start_time
@@ -294,7 +295,6 @@ def create_inference_dataset(TEMP_DATA_FOLDER, TARGET_DATA_FOLDER):
 
         before_image_dst = os.path.join(inference_before_directory, datapoint_name).replace("\\","/")
         after_image_dst = os.path.join(inference_after_directory, datapoint_name).replace("\\","/")
-        print(before_image_dst, after_image_dst)
         move(before_image_src, before_image_dst)
         move(after_image_src, after_image_dst)
 
