@@ -67,7 +67,7 @@ pip install .
 cd ../abd_model
 pip install .
 ```
-5. Get [caladrius:ada-0.1](https://github.com/rodekruis/caladrius/tree/ada-0.1) (damage assessment framework) and install
+6. Get [caladrius:ada-0.1](https://github.com/rodekruis/caladrius/tree/ada-0.1) (damage assessment framework) and install
 ```
 git clone --branch ada-0.1 https://github.com/rodekruis/caladrius.git
 cd caladrius
@@ -84,11 +84,11 @@ load-images --disaster typhoon-mangkhut --dest <workspace>/images
 abd cover --raster <workspace>/images/pre-event/*.tif --zoom 17 --out <workspace>/abd/cover.csv
 abd tile --raster <workspace>/images/pre-event/*.tif --zoom 17 --cover <workspace>/abd/cover.csv --out <workspace>/abd/images --format tif --no_web_ui --config ada-tools/config.toml
 ```
-2. Detect buildings
+3. Detect buildings
 ```
 abd predict --dataset <workspace>/abd --cover <workspace>/abd/cover.csv --checkpoint <workspace>/neat-fullxview-epoch75.pth --out <workspace>/abd/predictions --metatiles --keep_borders --config ada-tools/config.toml
 ```
-3. Generate vector file with buildings and filter noise
+4. Generate vector file with buildings and filter noise
 ```
 abd vectorize --masks <workspace>/abd/predictions --type Building --out <workspace>/abd/buildings.geojson --config ada-tools/config.toml
 filter-buildings --data <workspace>/abd/buildings.geojson --dest <workspace>/abd/buildings-clean.geojson
@@ -97,11 +97,11 @@ filter-buildings --data <workspace>/abd/buildings.geojson --dest <workspace>/abd
 ```
 prepare-data --data <workspace>/images --buildings <workspace>/abd/buildings-clean.geojson --dest <workspace>/caladrius
 ```
-4. Classify building damage
+6. Classify building damage
 ```
 python caladrius/caladrius/run.py --run-name run --data-path <workspace>/caladrius --model-path <workspace>/best_model_wts.pkl --checkpoint-path <workspace>/caladrius/runs --output-type classification --inference
 ```
-4. Generate vector file with buildings and damage labels
+7. Generate vector file with buildings and damage labels
 ```
 final-layer --builds <workspace>/abd/buildings-clean.geojson --damage <workspace>/caladrius/runs/run-input_size_32-learning_rate_0.001-batch_size_32/predictions/run-split_inference-epoch_001-model_inception-predictions.txt --out <workspace>/buildings-predictions.geojson --thresh 1
 ```
