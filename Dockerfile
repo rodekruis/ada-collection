@@ -11,8 +11,8 @@ RUN deps='build-essential cmake gdal-bin python-gdal libgdal-dev kmod wget apach
 	pip install --upgrade pip && \
 	pip install GDAL==$(gdal-config --version)
 
-WORKDIR /neo
-ADD neat_eo .
+WORKDIR /abd
+ADD abd_model .
 RUN pip install .
 
 WORKDIR /ada_tools
