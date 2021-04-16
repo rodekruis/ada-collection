@@ -11,10 +11,10 @@ The damage assessment framework & model is at [caladrius:ada-0.1](https://github
 
 ## Getting started
 
-### Prerequisites
+### Get pre-trained models and images
 1. Download pre-trained building detection model.
 2. Download pre-trained building damage classification model.
-3. [OPTIONAL] Pre- and post-disaster satellite images
+3. [OPTIONAL] pre- and post-disaster satellite images
 ```
     <workspace>
     ├── ...
@@ -64,3 +64,33 @@ cd caladrius
 ```
 
 ## End-to-end example
+1. Get satellite images of typhoon Mangkhut from [Maxar Open Data](https://www.maxar.com/open-data)
+```
+load-images --disaster typhoon-mangkhut --dest <workspace>/images
+```
+2. Prepare images for building detection
+```
+abd cover --raster <workspace>/images/pre-event/*.tif --zoom 17 --out <workspace>/abd/cover.csv
+abd tile --raster <workspace>/images/pre-event/*.tif --zoom 17 --cover <workspace>/abd/cover.csv --out <workspace>/abd/images --format tif --no_web_ui --config ada-tools/config.toml
+```
+2. Detect buildings
+```
+abd predict --dataset <workspace>/abd --cover <workspace>/abd/cover.csv --checkpoint <workspace>/neat-fullxview-epoch75.pth --out <workspace>/abd/predictions --metatiles --keep_borders --config ada-tools/config.toml
+```
+3. Generate vector file with buildings and filter noise
+```
+abd vectorize --masks <workspace>/abd/predictions --type Building --out <workspace>/abd/buildings.geojson --config ada-tools/config.toml
+filter-buildings --data <workspace>/abd/buildings.geojson --dest <workspace>/abd/buildings-clean.geojson
+```
+5. Prepare images for building damage classification
+```
+prepare-data --data <workspace>/images --buildings <workspace>/abd/buildings-clean.geojson --dest <workspace>/caladrius
+```
+4. Classify building damage
+```
+python caladrius/caladrius/run.py --run-name run --data-path <workspace>/caladrius --model-path <workspace>/best_model_wts.pkl --checkpoint-path <workspace>/caladrius/runs --output-type classification --inference
+```
+4. Generate vector file with buildings and damage labels
+```
+final-layer --builds <workspace>/abd/buildings-clean.geojson --damage <workspace>/caladrius/runs/run-input_size_32-learning_rate_0.001-batch_size_32/predictions/run-split_inference-epoch_001-model_inception-predictions.txt --out <workspace>/buildings-predictions.geojson --thresh 1
+```
