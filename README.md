@@ -7,7 +7,7 @@ This repo wraps two packages:
 - *abd_model* - forked from [automated-building-detection](https://github.com/rodekruis/automated-building-detection)
 - *ada_tools* - tools for pre- and post-processing of remote sensing images and vector data
 
-The damage assessment framework & model is at [caladrius:ada-0.1](https://github.com/rodekruis/caladrius/tree/ada-0.1) automatically installed via Docker ([caladrius.Dockerfile]()).
+The damage assessment framework & model is at [caladrius:ada-0.1](https://github.com/rodekruis/caladrius/tree/ada-0.1) automatically installed via Docker ([caladrius.Dockerfile](https://github.com/rodekruis/ada-collection/blob/master/caladrius.Dockerfile)).
 
 ## Getting started
 
