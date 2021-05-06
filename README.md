@@ -27,8 +27,8 @@ Your workspace should then look like
 ```
     <workspace>
     ├── ...
-    ├── neat-fullxview-epoch75.pth   # satellite images
-    ├── best_model_wts.pkl           # satellite images
+    ├── neat-fullxview-epoch75.pth   # pre-trained building detection model
+    ├── best_model_wts.pkl           # pre-trained building damage classification model
     ├── images                       # satellite images
     │   ├── pre-event                # before the disaster
     │   └── post-event               # after the disaster
