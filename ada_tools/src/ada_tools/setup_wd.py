@@ -167,7 +167,11 @@ def create_raster_mosaic(
                         ))
 
     # merge all mosaics
-    os.system(r'gdalbuildvrt "{}" "{}"'.format(out_file.replace('.tif', '.vrt'), os.path.join(data, "merged*.tif")))
+    os.system(r'gdalbuildvrt "{}" "{}" "{}" "{}" "{}"'.format(out_file.replace('.tif', '.vrt'),
+                                                              os.path.join(data, "merged-0.tif"),
+                                                              os.path.join(data, "merged-1.tif"),
+                                                              os.path.join(data, "merged-2.tif"),
+                                                              os.path.join(data, "merged-3.tif")))
     os.system(r'gdal_translate "{}" "{}"'.format(out_file.replace('.tif', '.vrt'), out_file))
     # for path in mosaics_path:
     #     os.remove(path)
@@ -200,9 +204,6 @@ def main(data, index, id, dest):
     """
     index_df = gpd.read_file(index)
     tile = get_tile(index_df, id)
-    print(tile)
-    print(tile.left, tile.bottom, tile.right, tile.top)
-    print(index_df[index_df.tile == id].geometry.bounds)
 
     for image in tile.pre_event:
         img_path = os.path.expanduser(os.path.join(dest, 'pre-event'))
