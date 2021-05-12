@@ -215,7 +215,11 @@ def tile_image_to_file(root, tile, image, ext=None):
         if C == 1:
             Image.fromarray(image.reshape(H, W), mode="L").save(path)
         elif C == 3:
-            cv2.imwrite(path, cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+            try:
+                cv2.imwrite(path, cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+            except:
+                image = image.astype('uint8')
+                cv2.imwrite(path, cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
         else:
             rasterio.open(path, "w", driver="GTiff", compress="lzw", height=H, width=W, count=C, dtype=image.dtype).write(
                 np.moveaxis(image, 2, 0)  # H,W,C -> C,H,W
