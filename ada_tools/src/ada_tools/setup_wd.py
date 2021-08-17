@@ -178,7 +178,8 @@ def create_raster_mosaic(
                         ))
 
     # merge all mosaics
-    os.system(r'gdalbuildvrt "{}" "{}" "{}" "{}" "{}"'.format(out_file.replace('.tif', '.vrt'),
+#     os.system(r'gdalbuildvrt "{}" "{}" "{}" "{}" "{}"'.format(out_file.replace('.tif', '.vrt'),
+    os.system(r'gdalbuildvrt "{}" "{}" "{}"'.format(out_file.replace('.tif', '.vrt'),
                                                              os.path.join(data, "merged-0.tif"),
                                                              os.path.join(data, "merged-1.tif")))
 #                                                              os.path.join(data, "merged-1.tif"),
