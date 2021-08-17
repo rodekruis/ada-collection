@@ -86,7 +86,8 @@ def create_raster_mosaic(
     #    [tile.left, tile.bottom, (tile.right+tile.left)/2, (tile.top+tile.bottom)/2],
     #    [(tile.right+tile.left)/2, tile.bottom, tile.right, (tile.top+tile.bottom)/2]
     #]
- 
+    
+    
     windows = [
         [tile.left, tile.bottom, tile.right, tile.top],
         [tile.left, tile.bottom, tile.right, tile.top]
@@ -105,7 +106,7 @@ def create_raster_mosaic(
             src_files_ = [src_files[ix]]
             add_out_file = True
 
-        rasters = {0: [], 1: [], 2: [], 3: []}
+        rasters = {0: [], 1: []}#, 2: [], 3: []}
 
         for path in src_files_:
             with rasterio.open(path, "r") as f:
@@ -150,11 +151,13 @@ def create_raster_mosaic(
 
         # create the mosaic and convert it from float back to the original dtype
         # print(f"iteration {ix}, rasters {rasters_name[0]}")
+            
+        
         for num_wind in rasters.keys():
             try:
                 mosaic = agg(np.stack(rasters[num_wind], axis=0))
             except:
-                mosaic = rasters[num_wind][0]
+                pass
             mosaic = mosaic.astype(profile["dtype"])
 
             # update the profile with the new shape and affine transform
