@@ -151,7 +151,10 @@ def create_raster_mosaic(
         # create the mosaic and convert it from float back to the original dtype
         # print(f"iteration {ix}, rasters {rasters_name[0]}")
         for num_wind in rasters.keys():
-            mosaic = agg(np.stack(rasters[num_wind], axis=0))
+            try:
+                mosaic = agg(np.stack(rasters[num_wind], axis=0))
+            except:
+                mosaic = rasters[num_wind]
             mosaic = mosaic.astype(profile["dtype"])
 
             # update the profile with the new shape and affine transform
