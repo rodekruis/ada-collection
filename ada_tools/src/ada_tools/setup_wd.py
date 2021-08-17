@@ -154,7 +154,7 @@ def create_raster_mosaic(
             try:
                 mosaic = agg(np.stack(rasters[num_wind], axis=0))
             except:
-                mosaic = rasters[num_wind]
+                mosaic = rasters[num_wind][0]
             mosaic = mosaic.astype(profile["dtype"])
 
             # update the profile with the new shape and affine transform
