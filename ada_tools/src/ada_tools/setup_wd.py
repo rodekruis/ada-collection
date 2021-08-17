@@ -88,6 +88,7 @@ def create_raster_mosaic(
     #]
  
     windows = [
+        [tile.left, tile.bottom, tile.right, tile.top],
         [tile.left, tile.bottom, tile.right, tile.top]
     ]
     add_out_file=False
@@ -171,13 +172,14 @@ def create_raster_mosaic(
                         ))
 
     # merge all mosaics
-    #os.system(r'gdalbuildvrt "{}" "{}" "{}" "{}" "{}"'.format(out_file.replace('.tif', '.vrt'),
-     #                                                         os.path.join(data, "merged-0.tif"),
-      #                                                        os.path.join(data, "merged-1.tif"),
+    os.system(r'gdalbuildvrt "{}" "{}" "{}" "{}" "{}"'.format(out_file.replace('.tif', '.vrt'),
+                                                             os.path.join(data, "merged-0.tif"),
+                                                             os.path.join(data, "merged-1.tif")))
+#                                                              os.path.join(data, "merged-1.tif"),
        #                                                       os.path.join(data, "merged-2.tif"),
         #                                                      os.path.join(data, "merged-3.tif")))
-    #os.system(r'gdal_translate "{}" "{}"'.format(out_file.replace('.tif', '.vrt'), out_file))
-    os.rename(os.path.join(data, "merged-0.tif"), out_file)
+    os.system(r'gdal_translate "{}" "{}"'.format(out_file.replace('.tif', '.vrt'), out_file))
+#     os.rename(os.path.join(data, "merged-0.tif"), out_file)
     # for path in mosaics_path:
     #     os.remove(path)
 
