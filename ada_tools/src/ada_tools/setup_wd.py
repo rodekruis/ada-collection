@@ -86,11 +86,13 @@ def create_raster_mosaic(
     #    [tile.left, tile.bottom, (tile.right+tile.left)/2, (tile.top+tile.bottom)/2],
     #    [(tile.right+tile.left)/2, tile.bottom, tile.right, (tile.top+tile.bottom)/2]
     #]
-    
+    print(tile.left, tile.bottom, tile.right, tile.top)
     
     windows = [
+        [tile.left, tile.bottom, tile.right, tile.top],
+        [tile.left, tile.bottom, tile.right, tile.top],
+        [tile.left, tile.bottom, tile.right, tile.top],
         [tile.left, tile.bottom, tile.right, tile.top]
-#         [tile.left, tile.bottom, tile.right, tile.top]
     ]
     add_out_file=False
     mosaics = []
@@ -106,8 +108,8 @@ def create_raster_mosaic(
             src_files_ = [src_files[ix]]
             add_out_file = True
 
-        rasters = {0: []}#, 1: []}#, 2: [], 3: []}
-        rasters_name = {0: []}
+        rasters = {0: [], 1: [], 2: [], 3: []}
+#         rasters_name = {0: []}
 
         for path in src_files_:
             print("processing", path)
@@ -145,17 +147,14 @@ def create_raster_mosaic(
                         profile = f.profile
                         transform = f.window_transform(window)
                     rasters[num_wind].append(raster)
-                    rasters_name[num_wind].append(path)
+#                     rasters_name[num_wind].append(path)
 
                     if add_out_file:
                         rasters[num_wind].append(mosaics[num_wind])
-                        rasters_name[num_wind].append(out_file.replace('.tif', f'-{num_wind}.tif'))
+#                         rasters_name[num_wind].append(out_file.replace('.tif', f'-{num_wind}.tif'))
 
         # create the mosaic and convert it from float back to the original dtype
         # print(f"iteration {ix}, rasters {rasters_name[0]}")
-        print("len(rasters)", len(rasters))
-        print("len(rasters[0])", len(rasters[0]))
-        print(rasters_name[0])
         
         for num_wind in rasters.keys():
             mosaic = agg(np.stack(rasters[num_wind], axis=0))
