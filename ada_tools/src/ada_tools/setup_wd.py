@@ -89,8 +89,8 @@ def create_raster_mosaic(
     
     
     windows = [
-        [tile.left, tile.bottom, tile.right, tile.top],
         [tile.left, tile.bottom, tile.right, tile.top]
+#         [tile.left, tile.bottom, tile.right, tile.top]
     ]
     add_out_file=False
     mosaics = []
@@ -106,9 +106,11 @@ def create_raster_mosaic(
             src_files_ = [src_files[ix]]
             add_out_file = True
 
-        rasters = {0: [], 1: []}#, 2: [], 3: []}
+        rasters = {0: []}#, 1: []}#, 2: [], 3: []}
+        rasters_name = {0: []}
 
         for path in src_files_:
+            print("processing", path)
             with rasterio.open(path, "r") as f:
                 # Calculate the boundary of the tile in pixel coordinates.
                 # window =f.window(
@@ -143,21 +145,20 @@ def create_raster_mosaic(
                         profile = f.profile
                         transform = f.window_transform(window)
                     rasters[num_wind].append(raster)
-                    # rasters_name[num_wind].append(path)
+                    rasters_name[num_wind].append(path)
 
                     if add_out_file:
                         rasters[num_wind].append(mosaics[num_wind])
-                        # rasters_name[num_wind].append(out_file.replace('.tif', f'-{num_wind}.tif'))
+                        rasters_name[num_wind].append(out_file.replace('.tif', f'-{num_wind}.tif'))
 
         # create the mosaic and convert it from float back to the original dtype
         # print(f"iteration {ix}, rasters {rasters_name[0]}")
-            
+        print("len(rasters)", len(rasters))
+        print("len(rasters[0])", len(rasters[0]))
+        print(rasters_name[0])
         
         for num_wind in rasters.keys():
-            try:
-                mosaic = agg(np.stack(rasters[num_wind], axis=0))
-            except:
-                pass
+            mosaic = agg(np.stack(rasters[num_wind], axis=0))
             mosaic = mosaic.astype(profile["dtype"])
 
             # update the profile with the new shape and affine transform
@@ -232,8 +233,8 @@ def main(data, index, id, dest):
             img_path = os.path.expanduser(dest)
         copyfile(os.path.join(data, image), os.path.join(img_path, image))
 
-    create_raster_mosaic(tile, os.path.join(dest, 'pre-event'))
     create_raster_mosaic(tile, os.path.join(dest, 'post-event'))
+    create_raster_mosaic(tile, os.path.join(dest, 'pre-event'))
 
     print('working directory has been set up', file=sys.stdout, flush=True)
 
