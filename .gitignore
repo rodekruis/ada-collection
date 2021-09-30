@@ -6,6 +6,7 @@ ada_tools/src/ada_tools/data_processing/data/*
 # ADA data
 input/
 output/
+test/
 
 # ds dev stuff
 data/

@@ -27,7 +27,7 @@ outfilename = 'buildings.geojson'
 
 # BOUNDING BOX
 # N.B. standard format (e.g. https://boundingbox.klokantech.com/) is [long_start, lat_start, long_end, lat_end]
-bbounds = [35.466783, 33.862331, 35.542587, 33.916113]
+bbounds = [-74.2763,17.9918,-73.2161,18.783]
 
 # convert the bounding box into string for query
 bbox_query = "s=\""+str(bbounds[1])+"\" w=\""+str(bbounds[0])+"\" n=\""+str(bbounds[3])+"\" e=\""+str(bbounds[2])+"\""
