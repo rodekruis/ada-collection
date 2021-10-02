@@ -41,7 +41,7 @@ sys.excepthook = exceptionLogger
 DAMAGE_TYPES = ["destroyed", "significant", "partial", "none"]
 
 # Fraction of image pixels that must be non-zero
-NONZERO_PIXEL_THRESHOLD = 0.70
+NONZERO_PIXEL_THRESHOLD = 0.7
 
 
 def damage_quantifier(category):
@@ -105,30 +105,37 @@ def makesquare(minx, miny, maxx, maxy):
     return geoms
 
 
-def get_image_list(root_folder):
+def get_image_list(root_folder, filename):
     image_list = []
     for path, subdirs, files in os.walk(root_folder):
         for name in files:
+            if filename != "" and filename not in name:
+                continue
             if name.lower().endswith(".tif"):
                 image_list.append(os.path.join(path, name).replace("\\","/"))
     return image_list
 
 
 def save_image(image, transform, out_meta, image_path):
+    image = np.swapaxes(image, 0, 2)
+    image = np.swapaxes(image, 0, 1)
+    try:
+        im = Image.fromarray(image)
+    except TypeError:
+        image = image.astype(np.uint8)
+        im = Image.fromarray(image)
+    im.save(image_path)
     # out_meta.update(
     #     {
     #         "driver": "PNG",
     #         "height": image.shape[1],
     #         "width": image.shape[2],
     #         "transform": transform,
+    #         "dtype": np.uint16
     #     }
     # )
     # with rasterio.open(image_path, "w", **out_meta) as dest:
     #     dest.write(image)
-    image = np.swapaxes(image, 0, 2)
-    image = np.swapaxes(image, 0, 1)
-    im = Image.fromarray(image)
-    im.save(image_path)
     return image_path
 
 
@@ -154,7 +161,7 @@ def match_geometry(image_path, geo_image_file, geometry):
         good_pixel_fraction = np.count_nonzero(image) / image.size
         if (
             np.sum(image) > 0
-            and good_pixel_fraction > NONZERO_PIXEL_THRESHOLD
+            and good_pixel_fraction >= NONZERO_PIXEL_THRESHOLD
             and len(image.shape) > 2
             and image.shape[0] == 3
         ):
@@ -163,14 +170,15 @@ def match_geometry(image_path, geo_image_file, geometry):
         return False
 
 
-def create_datapoints(df, ROOT_DIRECTORY, LABELS_FILE, TEMP_DATA_FOLDER):
+def create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAMES, LABELS_FILE, TEMP_DATA_FOLDER):
     start_time = datetime.datetime.now()
 
+    logger.info("Creating datapoints.")
     logger.info("Feature Size {}".format(len(df)))
 
     count = 0
 
-    image_list = get_image_list(ROOT_DIRECTORY)
+    image_list = get_image_list(ROOT_DIRECTORY, ROOT_FILENAMES)
 
     # logger.info(len(image_list)) # 319
 
@@ -254,10 +262,8 @@ def split_datapoints(filepath, TARGET_DATA_FOLDER, TEMP_DATA_FOLDER):
                 before_dst = os.path.join(split_before_directory, datapoint_name).replace("\\","/")
                 after_dst = os.path.join(split_after_directory, datapoint_name).replace("\\","/")
 
-                # print('{} => {} !! {}'.format(before_src, before_dst, os.path.isfile(before_src)))
                 move(before_src, before_dst)
 
-                # print('{} => {} !! {}'.format(after_src, after_dst, os.path.isfile(after_src)))
                 move(after_src, after_dst)
 
                 split_file.write(datapoint)
@@ -266,7 +272,7 @@ def split_datapoints(filepath, TARGET_DATA_FOLDER, TEMP_DATA_FOLDER):
 
 
 def create_inference_dataset(TEMP_DATA_FOLDER, TARGET_DATA_FOLDER):
-    print('starting inference')
+    logger.info('Creating inference dataset.')
     temp_before_directory = os.path.join(TEMP_DATA_FOLDER, "before").replace("\\","/")
     temp_after_directory = os.path.join(TEMP_DATA_FOLDER, "after").replace("\\","/")
     images_in_before_directory = [
@@ -278,7 +284,7 @@ def create_inference_dataset(TEMP_DATA_FOLDER, TARGET_DATA_FOLDER):
     intersection = list(
         set(images_in_before_directory) & set(images_in_after_directory)
     )
-    # print('images:', intersection)
+    logger.info('Images moved to inference: {}'.format(len(intersection)))
 
     inference_directory = os.path.join(TARGET_DATA_FOLDER, "inference").replace("\\","/")
     os.makedirs(inference_directory, exist_ok=True)
@@ -336,6 +342,12 @@ def main():
         help="input data path",
     )
     parser.add_argument(
+        "--dataname",
+        type=str,
+        default="",
+        help="filter input data by string",
+    )
+    parser.add_argument(
         "--buildings",
         type=str,
         required=True,
@@ -359,9 +371,7 @@ def main():
 
     # input
     ROOT_DIRECTORY = args.data
-
-    BEFORE_FOLDER = os.path.join(ROOT_DIRECTORY, "pre-event").replace("\\", "/")
-    AFTER_FOLDER = os.path.join(ROOT_DIRECTORY, "post-event").replace("\\", "/")
+    ROOT_FILENAMES = args.dataname
 
     GEOJSON_FILE = args.buildings
 
@@ -397,8 +407,7 @@ def main():
     )
 
     if args.create_image_stamps:
-        logger.info("Creating training dataset.")
-        create_datapoints(df, ROOT_DIRECTORY, LABELS_FILE, TEMP_DATA_FOLDER)
+        create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAMES, LABELS_FILE, TEMP_DATA_FOLDER)
         split_datapoints(LABELS_FILE, TARGET_DATA_FOLDER, TEMP_DATA_FOLDER)
         create_inference_dataset(TEMP_DATA_FOLDER, TARGET_DATA_FOLDER)
     else:
