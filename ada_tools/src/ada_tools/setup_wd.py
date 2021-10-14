@@ -101,7 +101,7 @@ def create_raster_mosaic(
             boundless=True,
             out_shape=out_shape,
             fill_value=np.nan,
-            out_dtype=np.float32,
+            out_dtype=np.int16,
             resampling=Resampling.lanczos,
         )
         if out_shape is None:
@@ -113,7 +113,7 @@ def create_raster_mosaic(
             profile.update(height=window.height,
                            width=window.width,
                            transform=rasterio.windows.transform(window, src.transform),
-                           dtype=np.float32)
+                           dtype=np.int16)
 
         # with rasterio.open(out_file.replace('.tif', f'-{num_path}-{num_wind}.tif'), "w", **profile) as dst:
         #     dst.write(raster)
@@ -121,7 +121,7 @@ def create_raster_mosaic(
         rasters.append(raster)
 
     raster_mosaic = agg(np.stack(rasters, axis=0))
-    profile.update(dtype=np.float64)
+    profile.update(dtype=np.int16)
 
     with rasterio.open(out_file, "w", **profile) as dst:
         dst.write(raster_mosaic)
