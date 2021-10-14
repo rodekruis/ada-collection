@@ -37,7 +37,8 @@ def first_non_nan_pixel(img: object) -> object:
     "Aggregation function returning the first pixel value that's not nan."
     out = np.zeros(img.shape[1:])
     out[...] = np.nan
-    for i in range(3):
+    print(f'stack shape {img.shape}')
+    for i in range(img.shape[0]):
         mask = np.isnan(out)
         out[mask] = img[i, mask]
     return out
@@ -121,7 +122,6 @@ def create_raster_mosaic(
 
         rasters.append(raster)
 
-    print(f'shape {np.stack(rasters, axis=0).shape}')
     raster_mosaic = agg(np.stack(rasters, axis=0))
     raster_mosaic = raster_mosaic.astype(np.int8)
 
