@@ -37,10 +37,9 @@ def first_non_nan_pixel(img: object) -> object:
     "Aggregation function returning the first pixel value that's not nan."
     out = np.zeros(img.shape[1:])
     out[...] = np.nan
-    for i in range(img.shape[0]):
+    for i in range(3):
         mask = np.isnan(out)
         out[mask] = img[i, mask]
-
     return out
 
 
