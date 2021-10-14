@@ -121,6 +121,7 @@ def create_raster_mosaic(
         rasters.append(raster)
 
     raster_mosaic = agg(np.stack(rasters, axis=0))
+    raster_mosaic = raster_mosaic.astype(np.int16)
     profile.update(dtype=np.int16)
 
     with rasterio.open(out_file, "w", **profile) as dst:
