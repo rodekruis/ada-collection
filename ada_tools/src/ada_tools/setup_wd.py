@@ -103,6 +103,8 @@ def create_raster_mosaic(
             out_dtype=np.float32,
             resampling=Resampling.lanczos,
         )
+        print(f'reading {path}')
+        print(f'shape {raster.shape}')
         if out_shape is None:
             out_shape = raster.shape
 
@@ -119,6 +121,7 @@ def create_raster_mosaic(
 
         rasters.append(raster)
 
+    print(f'shape {np.stack(rasters, axis=0).shape}')
     raster_mosaic = agg(np.stack(rasters, axis=0))
     raster_mosaic = raster_mosaic.astype(np.int8)
 
