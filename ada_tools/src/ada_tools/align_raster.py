@@ -40,9 +40,10 @@ def main(targetbuild, referencebuild, alignedbuild, targetraster, alignedraster)
     translate target raster based on best alignment between target and reference buildings
     """
 
-    path_to_out = os.path.split(out)[0]
-    if not os.path.exists(path_to_out):
-        os.makedirs(path_to_out)
+    for out in [alignedraster, alignedbuild]:
+        path_to_out = os.path.split(out)[0]
+        if not os.path.exists(path_to_out):
+            os.makedirs(path_to_out)
 
     build_target = gpd.read_file(targetbuild)
     target_crs = build_target.crs
@@ -69,7 +70,9 @@ def main(targetbuild, referencebuild, alignedbuild, targetraster, alignedraster)
         build_aligned.to_file(alignedbuild, driver='GeoJSON')
         translate_raster(xb, yb, targetraster, alignedraster)
     else:
-        print("Alignement failed!")
+        print("ERROR: alignment failed!")
+        if raster_start != raster_end:
+            shutil.copyfile(raster_start, raster_end)
 
 
 if __name__ == "__main__":
