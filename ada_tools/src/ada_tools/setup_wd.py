@@ -68,7 +68,7 @@ def create_raster_mosaic(
            the true pixel color.
     """
     filenames = os.listdir(os.path.join(data))
-    src_files = [os.path.join(data, name) for name in filenames if "merged-" not in name]
+    src_files = [os.path.join(data, name) for name in filenames if "merged" not in name]
     out_file = os.path.join(data, "merged.tif")
 
     # The array size (out_shape) will be taken from the first image, along with a
@@ -102,7 +102,7 @@ def create_raster_mosaic(
             out_shape=out_shape,
             fill_value=np.nan,
             out_dtype=np.float32,
-            resampling=Resampling.lanczos,
+            resampling=Resampling.cubic_spline,
         )
         print(f'reading {path}')
         print(f'shape {raster.shape}')
