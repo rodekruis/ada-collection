@@ -117,8 +117,8 @@ def create_raster_mosaic(
                            transform=rasterio.windows.transform(window, src.transform),
                            dtype=np.int8)
 
-        # with rasterio.open(out_file.replace('.tif', f'-{num_path}-{num_wind}.tif'), "w", **profile) as dst:
-        #     dst.write(raster)
+        with rasterio.open(out_file.replace('.tif', f'-{num_path}.tif'), "w", **profile) as dst:
+            dst.write(raster)
 
         rasters.append(raster)
 
