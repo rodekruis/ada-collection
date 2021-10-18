@@ -39,7 +39,7 @@ def first_non_nan_pixel(img: object) -> object:
     out[...] = np.nan
     print(f'stack shape {img.shape}, {np.amax(img[~np.isnan(img)])}')
     for i in range(img.shape[0]):
-        mask = (np.isnan(out) and np.where(out < 255.)).any()
+        mask = (np.isnan(out)) | (out > 255.)
         out[mask] = img[i, mask]
     return out
 
