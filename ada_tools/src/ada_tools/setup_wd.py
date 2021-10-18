@@ -39,7 +39,7 @@ def first_non_nan_pixel(img: object) -> object:
     out[...] = np.nan
     print(f'stack shape {img.shape}, {np.amax(img[~np.isnan(img)])}')
     for i in range(img.shape[0]):
-        mask = (np.isnan(out)) | (out > 255.)
+        mask = np.isnan(out)
         out[mask] = img[i, mask]
     return out
 
@@ -102,7 +102,7 @@ def create_raster_mosaic(
             out_shape=out_shape,
             fill_value=np.nan,
             out_dtype=np.float32,
-            resampling=Resampling.cubic_spline,
+            resampling=Resampling.nearest,
         )
         print(f'reading {path}')
         print(f'shape {raster.shape}')
