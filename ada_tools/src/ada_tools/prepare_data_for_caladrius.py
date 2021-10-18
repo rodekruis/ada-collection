@@ -105,12 +105,16 @@ def makesquare(minx, miny, maxx, maxy):
     return geoms
 
 
-def get_image_list(root_folder, filename):
+def get_image_list(root_folder, ROOT_FILENAME_PRE, ROOT_FILENAME_POST):
     image_list = []
     for path, subdirs, files in os.walk(root_folder):
         for name in files:
-            if filename != "" and filename not in name:
-                continue
+            if "pre-event" in path:
+                if ROOT_FILENAME_PRE != "" and ROOT_FILENAME_PRE not in name:
+                    continue
+            elif "post-event" in path:
+                if ROOT_FILENAME_POST != "" and ROOT_FILENAME_POST not in name:
+                    continue
             if name.lower().endswith(".tif"):
                 image_list.append(os.path.join(path, name).replace("\\","/"))
     return image_list
@@ -170,7 +174,7 @@ def match_geometry(image_path, geo_image_file, geometry):
         return False
 
 
-def create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAMES, LABELS_FILE, TEMP_DATA_FOLDER):
+def create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST, LABELS_FILE, TEMP_DATA_FOLDER):
     start_time = datetime.datetime.now()
 
     logger.info("Creating datapoints.")
@@ -178,7 +182,7 @@ def create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAMES, LABELS_FILE, TEMP_DATA
 
     count = 0
 
-    image_list = get_image_list(ROOT_DIRECTORY, ROOT_FILENAMES)
+    image_list = get_image_list(ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST)
 
     # logger.info(len(image_list)) # 319
 
@@ -342,10 +346,16 @@ def main():
         help="input data path",
     )
     parser.add_argument(
-        "--dataname",
+        "--datapre",
         type=str,
         default="",
-        help="filter input data by string",
+        help="filter pre-event input data by string",
+    )
+    parser.add_argument(
+        "--datapost",
+        type=str,
+        default="",
+        help="filter post-event input data by string",
     )
     parser.add_argument(
         "--buildings",
@@ -371,7 +381,8 @@ def main():
 
     # input
     ROOT_DIRECTORY = args.data
-    ROOT_FILENAMES = args.dataname
+    ROOT_FILENAME_PRE = args.datapre
+    ROOT_FILENAME_POST = args.datapost
 
     GEOJSON_FILE = args.buildings
 
@@ -407,7 +418,7 @@ def main():
     )
 
     if args.create_image_stamps:
-        create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAMES, LABELS_FILE, TEMP_DATA_FOLDER)
+        create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST, LABELS_FILE, TEMP_DATA_FOLDER)
         split_datapoints(LABELS_FILE, TARGET_DATA_FOLDER, TEMP_DATA_FOLDER)
         create_inference_dataset(TEMP_DATA_FOLDER, TARGET_DATA_FOLDER)
     else:

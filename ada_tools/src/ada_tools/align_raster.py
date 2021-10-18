@@ -18,7 +18,8 @@ def translate(x_y, gdf, gdf_ref, total_area):
 
 
 def translate_raster(xb, yb, raster_start, raster_end):
-    shutil.copyfile(raster_start, raster_end)
+    if raster_start != raster_end:
+        shutil.copyfile(raster_start, raster_end)
     rast_src = gdal.Open(raster_end, 1)
     gt = rast_src.GetGeoTransform()
     gtl = list(gt)
