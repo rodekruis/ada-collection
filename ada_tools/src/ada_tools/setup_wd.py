@@ -101,8 +101,8 @@ def create_raster_mosaic(
             boundless=True,
             out_shape=out_shape,
             fill_value=np.nan,
-            out_dtype=np.float32,
-            resampling=Resampling.nearest,
+            out_dtype=np.float64,
+            resampling=Resampling.lanczos,
         )
         print(f'reading {path}')
         print(f'shape {raster.shape}')
