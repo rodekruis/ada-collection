@@ -33,7 +33,7 @@ setuptools.setup(
             f"prepare-data = {PROJECT_NAME}.prepare_data_for_caladrius:main",
             f"create-index = {PROJECT_NAME}.create_index:main",
             f"setup-wd = {PROJECT_NAME}.setup_wd:main",
-            f"merge-output = {PROJECT_NAME}.merge_output:main"
+            f"merge-output = {PROJECT_NAME}.merge_output:main",
             f"align-raster = {PROJECT_NAME}.align_raster:main"
         ]
     }
