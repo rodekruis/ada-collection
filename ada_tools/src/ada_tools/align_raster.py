@@ -59,7 +59,8 @@ def main(targetbuild, referencebuild, alignedbuild, targetraster, alignedraster)
     build_area = build_target.geometry.area.sum()
     build_ref = build_reference[['geometry']].copy()
     build = build_target[['build_id', 'geometry']].copy()
-    res = minimize(translate, (0., 0.), bounds=xy_bounds, args=(build, build_ref, build_area), options={"disp": True})
+    res = minimize(translate, (0., 0.), bounds=xy_bounds, args=(build, build_ref, build_area),
+                   options={"disp": True, "maxls": 100})
     if res.success:
         print("Termination:", res.message)
         print("Number of iterations performed by the optimizer:", res.nit)
@@ -71,8 +72,8 @@ def main(targetbuild, referencebuild, alignedbuild, targetraster, alignedraster)
         translate_raster(xb, yb, targetraster, alignedraster)
     else:
         print("ERROR: alignment failed!")
-        if raster_start != raster_end:
-            shutil.copyfile(raster_start, raster_end)
+        if targetraster != alignedraster:
+            shutil.copyfile(targetraster, alignedraster)
 
 
 if __name__ == "__main__":
