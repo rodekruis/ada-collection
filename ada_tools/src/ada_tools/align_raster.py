@@ -42,7 +42,7 @@ def main(targetbuild, referencebuild, alignedbuild, targetraster, alignedraster)
 
     for out in [alignedraster, alignedbuild]:
         path_to_out = os.path.split(out)[0]
-        if not os.path.exists(path_to_out):
+        if path_to_out != '' and not os.path.exists(path_to_out):
             os.makedirs(path_to_out)
 
     build_target = gpd.read_file(targetbuild)
