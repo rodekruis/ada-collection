@@ -5,7 +5,13 @@ from scipy.optimize import minimize
 import click
 from osgeo import gdal
 import shutil
+import math
 
+def meters_to_decimal_degrees(meters, latitude):
+    # from wikipedia (https://en.wikipedia.org/wiki/Earth%27s_circumference)
+    # Measured around the poles, the circumference is 40,007.863 km (24,859.734 mi)
+    # 40007.863 / 360 = 111.132952778 m/deg
+    return meters / (111.132952778 * 1000 * math.cos(latitude * (math.pi / 180)))
 
 def translate(x_y, gdf, gdf_ref, total_area):
     # N.B. CRS must be in meters
@@ -23,8 +29,8 @@ def translate_raster(xb, yb, raster_start, raster_end):
     rast_src = gdal.Open(raster_end, 1)
     gt = rast_src.GetGeoTransform()
     gtl = list(gt)
-    gtl[0] += xb * abs(gtl[1])
-    gtl[3] += yb * abs(gtl[5])
+    gtl[0] += meters_to_decimal_degrees(xb, gtl[3])
+    gtl[3] += meters_to_decimal_degrees(yb, gtl[3])
     rast_src.SetGeoTransform(tuple(gtl))
     rast_src = None  # equivalent to save/close
 
@@ -46,32 +52,37 @@ def main(targetbuild, referencebuild, alignedbuild, targetraster, alignedraster)
             os.makedirs(path_to_out)
 
     build_target = gpd.read_file(targetbuild)
-    target_crs = build_target.crs
-    if target_crs is None:
-        target_crs = "EPSG:4326"
-    build_target = build_target.to_crs("EPSG:8857")
-    build_target['build_id'] = build_target.index
     build_reference = gpd.read_file(referencebuild)
-    build_reference = build_reference.to_crs("EPSG:8857")
+    if len(build_target)>0 and len(build_reference)>0:
+        target_crs = build_target.crs
+        if target_crs is None:
+            target_crs = "EPSG:4326"
+        build_target = build_target.to_crs("EPSG:8857")
+        build_target['build_id'] = build_target.index
+        build_reference = build_reference.to_crs("EPSG:8857")
 
-    build_aligned = build_target.copy()
-    xy_bounds = ((-10., 10.), (-10., 10.))
-    build_area = build_target.geometry.area.sum()
-    build_ref = build_reference[['geometry']].copy()
-    build = build_target[['build_id', 'geometry']].copy()
-    res = minimize(translate, (0., 0.), bounds=xy_bounds, args=(build, build_ref, build_area),
-                   options={"disp": True, "maxls": 100})
-    if res.success:
-        print("Termination:", res.message)
-        print("Number of iterations performed by the optimizer:", res.nit)
-        print("Results:", res.x)
-        xb, yb = res.x[0], res.x[1]
-        build_aligned.geometry = build_aligned.geometry.translate(xoff=xb, yoff=yb)
-        build_aligned = build_aligned.to_crs(target_crs)
-        build_aligned.to_file(alignedbuild, driver='GeoJSON')
-        translate_raster(xb, yb, targetraster, alignedraster)
+        build_aligned = build_target.copy()
+        xy_bounds = ((-10., 10.), (-10., 10.))
+        build_area = build_target.geometry.area.sum()
+        build_ref = build_reference[['geometry']].copy()
+        build = build_target[['build_id', 'geometry']].copy()
+        res = minimize(translate, (0., 0.), bounds=xy_bounds, args=(build, build_ref, build_area),
+                       options={"disp": True, "maxls": 100})
+        if res.success:
+            print("Termination:", res.message)
+            print("Number of iterations performed by the optimizer:", res.nit)
+            print("Results:", res.x)
+            xb, yb = res.x[0], res.x[1]
+            build_aligned.geometry = build_aligned.geometry.translate(xoff=xb, yoff=yb)
+            build_aligned = build_aligned.to_crs(target_crs)
+            build_aligned.to_file(alignedbuild, driver='GeoJSON')
+            translate_raster(xb, yb, targetraster, alignedraster)
+        else:
+            print("ERROR: alignment failed!")
+            if targetraster != alignedraster:
+                shutil.copyfile(targetraster, alignedraster)
     else:
-        print("ERROR: alignment failed!")
+        print("WARNING: no buildings to do alignment")
         if targetraster != alignedraster:
             shutil.copyfile(targetraster, alignedraster)
 
