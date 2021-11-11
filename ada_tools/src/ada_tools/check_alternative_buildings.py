@@ -6,6 +6,7 @@ import geopandas as gpd
 import pandas as pd
 import os
 from ada_tools.align_raster import align, translate
+from tqdm import tqdm
 
 
 def get_extent(raster: str) -> gpd.GeoDataFrame:
@@ -52,7 +53,7 @@ def main(builds, raster, refbuilds, dest):
     """
     build_target = gpd.GeoDataFrame()
     gdf_raster = get_extent(raster)
-    for build_file in os.listdir(builds):
+    for build_file in tqdm(os.listdir(builds)):
         gdf_build = gpd.read_file(os.path.join(builds, build_file))
         xmin, ymin, xmax, ymax = gdf_raster.total_bounds
         gdf_build_in_raster = gdf_build.cx[xmin:xmax, ymin:ymax]
