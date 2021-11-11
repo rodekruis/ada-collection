@@ -35,8 +35,7 @@ def get_extent(raster: str) -> gpd.GeoDataFrame:
 
     crs_proj = df.crs.unique()[0]
     gdf = gpd.GeoDataFrame({'geometry': df.geometry.tolist(),
-                            'file': df.file.tolist(),
-                            'pre-post': df['pre-post'].tolist()},
+                            'file': df.file.tolist()},
                            crs=crs_proj)
 
     return gdf
