@@ -7,7 +7,7 @@ import pandas as pd
 import os
 from ada_tools.align_raster import align, translate
 from tqdm import tqdm
-
+from shapely.geometry import Polygon
 
 def get_extent(raster: str) -> gpd.GeoDataFrame:
     """
@@ -53,12 +53,17 @@ def main(builds, raster, refbuilds, dest):
     """
     build_target = gpd.GeoDataFrame()
     gdf_raster = get_extent(raster)
-    for build_file in tqdm(os.listdir(builds)):
-        gdf_build = gpd.read_file(os.path.join(builds, build_file))
-        xmin, ymin, xmax, ymax = gdf_raster.total_bounds
-        gdf_build_in_raster = gdf_build.cx[xmin:xmax, ymin:ymax]
-        if not gdf_build.empty:
-            build_target = build_target.append(gdf_build_in_raster, ignore_index=True)
+    xmin, ymin, xmax, ymax = gdf_raster.total_bounds
+    gdf_builds_extents = gpd.read_file(os.path.join(builds, "extents.geojson"))
+
+    res_intersection = gdf_raster.overlay(gdf_builds_extents, how='intersection')
+    if not res_intersection.empty:
+        for row in res_intersection.iterrows():
+            build_file = row["file"]
+            gdf_build = gpd.read_file(os.path.join(builds, build_file))
+            gdf_build_in_raster = gdf_build.cx[xmin:xmax, ymin:ymax]
+            if not gdf_build_in_raster.empty:
+                build_target = build_target.append(gdf_build_in_raster, ignore_index=True)
 
     build_reference = gpd.read_file(refbuilds)
     if len(build_target) > 0 and len(build_reference) > 0:
