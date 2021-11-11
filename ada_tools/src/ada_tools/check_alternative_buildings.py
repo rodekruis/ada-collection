@@ -56,7 +56,7 @@ def main(builds, raster, refbuilds, dest):
     xmin, ymin, xmax, ymax = gdf_raster.total_bounds
     gdf_builds_extents = gpd.read_file(os.path.join(builds, "extents.geojson"))
 
-    res_intersection = gdf_raster.overlay(gdf_builds_extents, how='intersection')
+    res_intersection = gpd.overlay(gdf_raster, gdf_builds_extents, how='intersection')
     if not res_intersection.empty:
         for row in res_intersection.iterrows():
             build_file = row["file"]
