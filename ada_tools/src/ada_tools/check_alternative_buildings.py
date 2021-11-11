@@ -5,7 +5,7 @@ from shapely.geometry import box
 import geopandas as gpd
 import pandas as pd
 import os
-from align_raster import align, translate
+from ada_tools.align_raster import align, translate
 
 
 def get_extent(raster: str) -> gpd.GeoDataFrame:
@@ -62,7 +62,7 @@ def main(builds, raster, refbuilds, dest):
 
     build_reference = gpd.read_file(refbuilds)
     if len(build_target) > 0 and len(build_reference) > 0:
-        target_crs = build_target.crs
+        target_crs = build_target.crsbuild
         if target_crs is None:
             target_crs = "EPSG:4326"
         build_target = build_target.to_crs("EPSG:8857")
