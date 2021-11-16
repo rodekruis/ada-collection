@@ -57,6 +57,7 @@ def main(builds, raster, refbuilds, dest):
     gdf_builds_extents = gpd.read_file(os.path.join(builds, "extents.geojson"))
 
     res_intersection = gpd.overlay(gdf_raster, gdf_builds_extents, how='intersection')
+    print(res_intersection.head())
     if not res_intersection.empty:
         for row in res_intersection.iterrows():
             build_file = row["file"]
@@ -87,11 +88,11 @@ def main(builds, raster, refbuilds, dest):
         else:
             print(f"ERROR: alignment failed! keeping {refbuilds}")
     elif len(build_target) == 0 and len(build_reference) > 0:
-        print("No existing buildings found, continuing")
+        print("No alternative buildings found, continuing")
     elif len(build_target) > 0 and len(build_reference) == 0:
-        print("No buildings found")
+        print("No reference buildings found, continuing")
     else:
-        print("WARNING: no buildings to do alignment")
+        print("No alternative and reference buildings found, continuing")
 
 
 if __name__ == "__main__":
