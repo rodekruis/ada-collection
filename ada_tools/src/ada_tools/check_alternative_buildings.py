@@ -58,7 +58,6 @@ def main(builds, raster, refbuilds, dest):
 
     gdf_builds_extents = gdf_builds_extents.rename(columns={'file': 'alternative_buildings_file'})
     res_intersection = gpd.overlay(gdf_raster, gdf_builds_extents, how='intersection')
-    print(res_intersection.head())
     if not res_intersection.empty:
         for ix, row in res_intersection.iterrows():
             build_file = row["alternative_buildings_file"]
@@ -69,7 +68,7 @@ def main(builds, raster, refbuilds, dest):
 
     build_reference = gpd.read_file(refbuilds)
     if len(build_target) > 0 and len(build_reference) > 0:
-        target_crs = build_target.crsbuild
+        target_crs = build_target.crs
         if target_crs is None:
             target_crs = "EPSG:4326"
         build_target = build_target.to_crs("EPSG:8857")
@@ -92,7 +91,7 @@ def main(builds, raster, refbuilds, dest):
         print("No alternative buildings found, continuing")
     elif len(build_target) > 0 and len(build_reference) == 0:
         print("No reference buildings found, continuing")
-    else:
+    elif len(build_target) == 0 and len(build_reference) == 0:
         print("No alternative and reference buildings found, continuing")
 
 
