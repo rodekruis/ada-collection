@@ -69,7 +69,7 @@ def main(builds, raster, refbuilds, dest):
     build_reference = gpd.read_file(refbuilds)
     if len(build_target) > 0 and len(build_reference) > 0:
         target_crs = "EPSG:4326"
-        build_target.set_crs(target_crs, allow_override=True)  # override Google's default ("Undefined geographic SRS")
+        build_target = build_target.set_crs(target_crs, allow_override=True)  # override Google's default ("Undefined geographic SRS")
         if build_reference.crs is None:
             build_reference.set_crs("EPSG:4326")
         build_target = build_target.to_crs("EPSG:8857")
