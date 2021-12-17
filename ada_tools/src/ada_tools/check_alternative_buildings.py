@@ -52,22 +52,28 @@ def main(builds, raster, refbuilds, dest):
     check if builds cover raster, if yes align with refbuilds and save as dest
     """
     build_target = gpd.GeoDataFrame()
+    print('getting raster extent')
     gdf_raster = get_extent(raster)
     xmin, ymin, xmax, ymax = gdf_raster.total_bounds
+    print('getting google extents')
     gdf_builds_extents = gpd.read_file(os.path.join(builds, "extents.geojson"))
-
+    print('calculating intersection')
     gdf_builds_extents = gdf_builds_extents.rename(columns={'file': 'alternative_buildings_file'})
     res_intersection = gpd.overlay(gdf_raster, gdf_builds_extents, how='intersection')
     if not res_intersection.empty:
         for ix, row in res_intersection.iterrows():
+            print('analyzing intersection')
             build_file = row["alternative_buildings_file"]
             gdf_build = gpd.read_file(os.path.join(builds, build_file))
+            print('filtering buildings')
             gdf_build_in_raster = gdf_build.cx[xmin:xmax, ymin:ymax]
+            print('adding them somewhere')
             if not gdf_build_in_raster.empty:
                 build_target = build_target.append(gdf_build_in_raster, ignore_index=True)
 
     build_reference = gpd.read_file(refbuilds)
     if len(build_target) > 0 and len(build_reference) > 0:
+        print('fixing CRS')
         target_crs = "EPSG:4326"
         build_target = build_target.set_crs(target_crs, allow_override=True)  # override Google's default ("Undefined geographic SRS")
         if build_reference.crs is None:
@@ -75,6 +81,7 @@ def main(builds, raster, refbuilds, dest):
         build_target = build_target.to_crs("EPSG:8857")
         build_reference = build_reference.to_crs("EPSG:8857")
 
+        print('aligning buildings')
         res = align(build_target, build_reference)
 
         if res.success:
