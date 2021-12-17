@@ -62,8 +62,8 @@ def main(builds, raster, refbuilds, dest):
     res_intersection = gpd.overlay(gdf_raster, gdf_builds_extents, how='intersection')
     if not res_intersection.empty:
         for ix, row in res_intersection.iterrows():
-            print('analyzing intersection')
             build_file = row["alternative_buildings_file"]
+            print(f'analyzing intersection {build_file}')
             gdf_build = gpd.read_file(os.path.join(builds, build_file))
             print('filtering buildings')
             gdf_build_in_raster = gdf_build.cx[xmin:xmax, ymin:ymax]
