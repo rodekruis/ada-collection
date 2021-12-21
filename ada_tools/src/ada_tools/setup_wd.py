@@ -15,7 +15,7 @@ import sys
 from typing import Callable, List, NamedTuple
 import rasterio
 from rasterio.enums import Resampling
-from rasterio.merge import merge
+from rasterio.errors import DatasetIOShapeError
 import numpy as np
 from tqdm import tqdm
 
@@ -95,16 +95,19 @@ def create_raster_mosaic(
 
         window = src.window(wind_extr[0], wind_extr[1], wind_extr[2], wind_extr[3])
 
-        raster = src.read(
-            window=window,
-            boundless=True,
-            out_shape=out_shape,
-            fill_value=np.nan,
-            out_dtype=np.float64,
-            resampling=Resampling.lanczos,
-        )
-        # print(f'reading {path}')
-        # print(f'shape {raster.shape}')
+        try:
+            raster = src.read(
+                window=window,
+                boundless=True,
+                out_shape=out_shape,
+                fill_value=np.nan,
+                out_dtype=np.float64,
+                resampling=Resampling.lanczos,
+            )
+        except DatasetIOShapeError:
+            continue
+        if raster.shape[0] < 3:
+            continue
         if out_shape is None:
             out_shape = raster.shape
 
@@ -115,11 +118,6 @@ def create_raster_mosaic(
                            width=window.width,
                            transform=rasterio.windows.transform(window, src.transform),
                            dtype=np.int8)
-
-        # raster_int = raster.astype(np.int8)
-        # with rasterio.open(out_file.replace('.tif', f'-{num_path}.tif'), "w", **profile) as dst:
-        #     dst.write(raster_int)
-
         rasters.append(raster)
 
     raster_mosaic = agg(np.stack(rasters, axis=0))
