@@ -9,7 +9,7 @@ import numpy as np
 @click.option('--builds', help='input (buildings)')
 @click.option('--damage', help='input (damage classes)')
 @click.option('--out', default='buildings_predictions.geojson', help='input')
-@click.option('--thresh', default=2, help='threshold to binarize output')
+@click.option('--thresh', default="no", help='threshold to binarize output')
 def main(builds, damage, out, thresh):
     df = gpd.read_file(builds).to_crs(epsg="4326")
     df = df.loc[~df["geometry"].is_empty]
@@ -24,10 +24,11 @@ def main(builds, damage, out, thresh):
         try:
             label = int(labels.loc[str(index), "label"])
             # binarize
-            if label > thresh:
-                label = 1
-            else:
-                label = 0
+            if thresh != "no":
+                if label > thresh:
+                    label = 1
+                else:
+                    label = 0
             df.at[index, 'damage'] = label
         except:
             df.at[index, 'damage'] = np.nan
