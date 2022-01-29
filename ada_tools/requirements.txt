@@ -18,7 +18,7 @@ pyparsing==2.4.7          # via ada_tools (setup.py), snuggs
 pyproj==2.6.1.post1       # via ada_tools (setup.py), geopandas
 python-dateutil==2.8.1    # via ada_tools (setup.py), pandas
 pytz==2020.1              # via ada_tools (setup.py), pandas
-rasterio==1.1.5           # via ada_tools (setup.py)
+rasterio==1.2.10          # via ada_tools (setup.py)
 shapely==1.7.0            # via ada_tools (setup.py), geopandas
 six==1.15.0               # via ada_tools (setup.py), fiona, munch, python-dateutil
 snuggs==1.4.7             # via ada_tools (setup.py), rasterio
