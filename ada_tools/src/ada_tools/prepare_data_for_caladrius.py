@@ -282,21 +282,18 @@ def create_inference_dataset(TEMP_DATA_FOLDER, TARGET_DATA_FOLDER):
     images_in_before_directory = [
         x for x in os.listdir(temp_before_directory) if x.endswith(".png")
     ]
-    if len(images_in_before_directory)==0:
-        logging.error("no pre-disaster images of buildings")
-        raise RuntimeError
+    if len(images_in_before_directory) == 0:
+        raise RuntimeError("no pre-disaster images of buildings")
     images_in_after_directory = [
         x for x in os.listdir(temp_after_directory) if x.endswith(".png")
     ]
-    if len(images_in_after_directory)==0:
-        logging.error("no post-disaster images of buildings")
-        raise RuntimeError
+    if len(images_in_after_directory) == 0:
+        raise RuntimeError("no post-disaster images of buildings")
     intersection = list(
         set(images_in_before_directory) & set(images_in_after_directory)
     )
-    if len(intersection)==0:
-        logging.error("no corresponding images pre- and post-disaster")
-        raise RuntimeError
+    if len(intersection) == 0:
+        raise RuntimeError("no corresponding images pre- and post-disaster")
     logger.info('Images moved to inference: {}'.format(len(intersection)))
 
     inference_directory = os.path.join(TARGET_DATA_FOLDER, "inference").replace("\\","/")
@@ -412,9 +409,8 @@ def main():
 
     # Read in the main buildings shape file
     df = geopandas.read_file(GEOJSON_FILE).to_crs(epsg="4326")
-    if len(df)==0:
-        logging.error("no buildings detected in pre-disaster image")
-        raise RuntimeError
+    if len(df) == 0:
+        raise RuntimeError("no buildings detected in pre-disaster image")
 
     # Remove any empty building shapes
     number_of_all_datapoints = len(df)

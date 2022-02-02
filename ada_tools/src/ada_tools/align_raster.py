@@ -66,13 +66,13 @@ def main(targetbuild, referencebuild, alignedbuild, targetraster, alignedraster)
 
     build_target = gpd.read_file(targetbuild)
     build_reference = gpd.read_file(referencebuild)
-    target_crs = build_target.crs
-    if target_crs is None:
-        target_crs = "EPSG:4326"
-    build_target = build_target.to_crs("EPSG:8857")
-    build_reference = build_reference.to_crs("EPSG:8857")
-
     if len(build_target) > 0 and len(build_reference) > 0:
+        target_crs = build_target.crs
+        if target_crs is None:
+            target_crs = "EPSG:4326"
+        build_target = build_target.to_crs("EPSG:8857")
+        build_reference = build_reference.to_crs("EPSG:8857")
+
         res = align(build_target, build_reference)
 
         if res.success:
