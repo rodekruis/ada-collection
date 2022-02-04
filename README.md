@@ -12,13 +12,13 @@ The damage assessment framework & model is at [caladrius:ada-0.1](https://github
 ## Getting started
 
 ### Get pre-trained models and images
-1. Download pre-trained building detection model: [neat-fullxview-epoch75.pth](https://rodekruis.sharepoint.com/sites/510-Team/_layouts/15/guestaccess.aspx?docid=048f1927be4af4bc09805be0cfc376b22&authkey=AZSnVN8hrbj9CYSV8K-wg9o&expiration=2021-08-08T22%3A00%3A00.000Z&e=VIywGA): 
+1. Download pre-trained building detection model: [neat-fullxview-epoch75.pth](https://drive.google.com/file/d/1pMkrBjdpmOgT_MzqZSLHvmQDsZNM_Lwo/view?usp=sharing): 
   * architecture: AlbuNet ([U-Net-like](https://arxiv.org/abs/1505.04597) encoder-decoder with a ResNet, ResNext or WideResNet encoder)
   * training: [xBD dataset](https://arxiv.org/pdf/1911.09296.pdf), 75 epochs
   * performance: [IoU](https://en.wikipedia.org/wiki/Jaccard_index) 0.79, [MCC](https://en.wikipedia.org/wiki/Matthews_correlation_coefficient) 0.75
-2. Download pre-trained building damage classification model: [best_model_wts.pkl]()
+2. Download pre-trained building damage classification model: [best_model_wts.pkl](https://drive.google.com/file/d/1G3Wgjj9wIGovKKQ63_bwqqTGCJ1l27R7/view?usp=sharing)
   * architecture: pseudo-[siamese network](http://papers.nips.cc/paper/769-signature-verification-using-a-siamese-time-delay-neural-network) with two [ImageNet](https://ieeexplore.ieee.org/abstract/document/5206848)
-pre-trained [Inception_v3](http://openaccess.thecvf.com/content_cvpr_2016/html/Szegedy_Rethinking_the_Inception_CVPR_2016_paper.html) models
+pre-trained [EffNet-B4](https://arxiv.org/pdf/1905.11946.pdf) models + attention
   * training: [xBD dataset](https://arxiv.org/pdf/1911.09296.pdf), 75 epochs
   * performance: up to [F1 score](https://en.wikipedia.org/wiki/F-score) 0.79, [AUC](https://en.wikipedia.org/wiki/Receiver_operating_characteristic) 0.984 (see [performance paper](https://www.mdpi.com/2072-4292/12/17/2839))
 3. [OPTIONAL] pre- and post-disaster satellite images
@@ -99,7 +99,7 @@ prepare-data --data <workspace>/images --buildings <workspace>/abd/buildings-cle
 ```
 6. Classify building damage
 ```
-python caladrius/caladrius/run.py --run-name run --data-path <workspace>/caladrius --model-path <workspace>/best_model_wts.pkl --checkpoint-path <workspace>/caladrius/runs --output-type classification --inference
+CUDA_VISIBLE_DEVICES="0" python caladrius/caladrius/run.py --run-name run --data-path <workspace>/caladrius --model-type attention --model-path <workspace>/best_model_wts.pkl --checkpoint-path <workspace>/caladrius/runs --batch-size 2 --classification-loss-type f1 --output-type classification --inference
 ```
 7. Generate vector file with buildings and damage labels
 ```
