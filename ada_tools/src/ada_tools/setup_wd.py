@@ -10,7 +10,7 @@ import geopandas as gpd
 from shutil import copyfile
 import os
 import click
-import json
+import shutil
 import sys
 from typing import Callable, List, NamedTuple
 import rasterio
@@ -70,61 +70,64 @@ def create_raster_mosaic(
     src_files = [os.path.join(data, name) for name in filenames if "merged" not in name]
     out_file = os.path.join(data, "merged.tif")
 
-    # The array size (out_shape) will be taken from the first image, along with a
-    # corresponding profile (the set of metadata particular to that image) and. 
-    # `transform` refers to an affine transformation matrix mapping pixel coordinates to
-    # world coordinates, and will be calculated once the first window is generated.
-    out_shape = None
-    profile = None
-    transform = None
+    if len(src_files) == 1:
+        shutil.copyfile(src_files[0], out_file)
+    else:
+        # The array size (out_shape) will be taken from the first image, along with a
+        # corresponding profile (the set of metadata particular to that image) and.
+        # `transform` refers to an affine transformation matrix mapping pixel coordinates to
+        # world coordinates, and will be calculated once the first window is generated.
+        out_shape = None
+        profile = None
+        transform = None
 
-    # windows = [
-    #     [tile.left, (tile.top+tile.bottom)/2, (tile.right+tile.left)/2, tile.top],
-    #     [(tile.right+tile.left)/2, (tile.top+tile.bottom)/2, tile.right, tile.top],
-    #     [tile.left, tile.bottom, (tile.right+tile.left)/2, (tile.top+tile.bottom)/2],
-    #     [(tile.right+tile.left)/2, tile.bottom, tile.right, (tile.top+tile.bottom)/2]
-    # ]
-    wind_extr = [tile.left, tile.bottom, tile.right, tile.top]
-    add_out_file = False
-    mosaics = []
-    mosaics_path = []
-    rasters = []
+        # windows = [
+        #     [tile.left, (tile.top+tile.bottom)/2, (tile.right+tile.left)/2, tile.top],
+        #     [(tile.right+tile.left)/2, (tile.top+tile.bottom)/2, tile.right, tile.top],
+        #     [tile.left, tile.bottom, (tile.right+tile.left)/2, (tile.top+tile.bottom)/2],
+        #     [(tile.right+tile.left)/2, tile.bottom, tile.right, (tile.top+tile.bottom)/2]
+        # ]
+        wind_extr = [tile.left, tile.bottom, tile.right, tile.top]
+        add_out_file = False
+        mosaics = []
+        mosaics_path = []
+        rasters = []
 
-    for num_path, path in enumerate(src_files):
-        src = rasterio.open(path, "r")
+        for num_path, path in enumerate(src_files):
+            src = rasterio.open(path, "r")
 
-        window = src.window(wind_extr[0], wind_extr[1], wind_extr[2], wind_extr[3])
+            window = src.window(wind_extr[0], wind_extr[1], wind_extr[2], wind_extr[3])
 
-        try:
-            raster = src.read(
-                window=window,
-                boundless=True,
-                out_shape=out_shape,
-                fill_value=np.nan,
-                out_dtype=np.float64,
-                resampling=Resampling.lanczos,
-            )
-        except DatasetIOShapeError:
-            continue
-        if raster.shape[0] < 3:
-            continue
-        if out_shape is None:
-            out_shape = raster.shape
+            try:
+                raster = src.read(
+                    window=window,
+                    boundless=True,
+                    out_shape=out_shape,
+                    fill_value=np.nan,
+                    out_dtype=np.float64,
+                    resampling=Resampling.lanczos,
+                )
+            except DatasetIOShapeError:
+                continue
+            if raster.shape[0] < 3:
+                continue
+            if out_shape is None:
+                out_shape = raster.shape
 
-        # update the profile with the new shape and affine transform
-        if profile is None:
-            profile = src.meta.copy()
-            profile.update(height=window.height,
-                           width=window.width,
-                           transform=rasterio.windows.transform(window, src.transform),
-                           dtype=np.int8)
-        rasters.append(raster)
+            # update the profile with the new shape and affine transform
+            if profile is None:
+                profile = src.meta.copy()
+                profile.update(height=window.height,
+                               width=window.width,
+                               transform=rasterio.windows.transform(window, src.transform),
+                               dtype=np.int8)
+            rasters.append(raster)
 
-    raster_mosaic = agg(np.stack(rasters, axis=0))
-    raster_mosaic = raster_mosaic.astype(np.int8)
+        raster_mosaic = agg(np.stack(rasters, axis=0))
+        raster_mosaic = raster_mosaic.astype(np.int8)
 
-    with rasterio.open(out_file, "w", **profile) as dst:
-        dst.write(raster_mosaic)
+        with rasterio.open(out_file, "w", **profile) as dst:
+            dst.write(raster_mosaic)
 
     # rasters = {0: [], 1: [], 2: [], 3: []}
     # profiles = {0: [], 1: [], 2: [], 3: []}
