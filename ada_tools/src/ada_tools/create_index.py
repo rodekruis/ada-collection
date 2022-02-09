@@ -232,6 +232,7 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str]) -> gpd.GeoDataF
         print(f'WARNING: multiple CRS found, reprojecting {df.crs.unique()}')
         gdf = gpd.GeoDataFrame()
         crs = df.crs.mode()
+        print(crs)
         for ix, row in df.iterrows():
             gdf_raster = gpd.GeoDataFrame({'geometry': [row['geometry']],
                                            'file': [row['file']],
