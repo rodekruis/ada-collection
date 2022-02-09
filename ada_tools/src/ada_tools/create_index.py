@@ -229,23 +229,23 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str]) -> gpd.GeoDataF
                 }), ignore_index=True)
 
     if len(df.crs.unique()) > 1:
-        print(f'WARNING: multiple CRS found, reprojecting {df.crs.unique()}')
-        gdf = gpd.GeoDataFrame()
-        crs = df.crs.mode().values[0]
-        for ix, row in df.iterrows():
-            gdf_raster = gpd.GeoDataFrame({'geometry': [row['geometry']],
-                                           'file': [row['file']],
-                                           'pre-post': [row['pre-post']]},
-                                          crs=row['crs'])
-            gdf_raster = gdf_raster.to_crs(crs)
-            gdf = gdf.append(gdf_raster, ignore_index=True)
+        crs_proj = df.crs.mode().values[0]
+        print(f'WARNING: multiple CRS found {df.crs.unique()}, reprojecting to {crs_proj}')
+        # gdf = gpd.GeoDataFrame()
+        # for ix, row in df.iterrows():
+        #     gdf_raster = gpd.GeoDataFrame({'geometry': [row['geometry']],
+        #                                    'file': [row['file']],
+        #                                    'pre-post': [row['pre-post']]},
+        #                                   crs=row['crs'])
+        #     gdf_raster = gdf_raster.to_crs(crs_proj)
+        #     gdf = gdf.append(gdf_raster, ignore_index=True)
     else:
         crs_proj = df.crs.unique()[0]
-        gdf = gpd.GeoDataFrame({'geometry': df.geometry.tolist(),
-                                'file': df.file.tolist(),
-                                'pre-post': df['pre-post'].tolist()},
-                               crs=crs_proj)
 
+    gdf = gpd.GeoDataFrame({'geometry': df.geometry.tolist(),
+                            'file': df.file.tolist(),
+                            'pre-post': df['pre-post'].tolist()},
+                           crs=crs_proj)
     return gdf
 
 
@@ -360,14 +360,18 @@ def main(data, date, zoom, dest, exte):
     """
     date_event = datetime.datetime.strptime(date, "%Y-%m-%d")
     rasters_pre, rasters_post = divide_images(data, date_event)
+    print("getting image extents")
     gdf = get_extents(rasters_pre, rasters_post)
     if exte != '':
         gdf_pre = gdf[gdf['pre-post'] == 'pre-event']
         gdf_pre.to_file(exte.replace('.geojson', '-pre-event.geojson'), driver="GeoJSON")
         gdf_pos = gdf[gdf['pre-post'] == 'post-event']
         gdf_pos.to_file(exte.replace('.geojson', '-post-event.geojson'), driver="GeoJSON")
+    print("generating tiles")
     df_tiles = generate_tiles(gdf, zoom)
+    print("assigning images to tiles")
     df_tiles = assign_images_to_tiles(df_tiles, gdf)
+    print("saving index")
     df_tiles.to_file(dest, driver="GeoJSON")
 
 
