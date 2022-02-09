@@ -28,7 +28,6 @@ def get_maxar_image_urls(disaster: str) -> List[str]:
     response = urllib.request.urlopen(base_url)
     html = response.read()
     html_soup = BeautifulSoup(html, 'html.parser')
-    print(html_soup)
     return [
         url.strip()
         for url in html_soup.find_all("textarea")[0].text.split("\n")
