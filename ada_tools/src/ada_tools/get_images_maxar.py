@@ -28,6 +28,7 @@ def get_maxar_image_urls(disaster: str) -> List[str]:
     response = urllib.request.urlopen(base_url)
     html = response.read()
     html_soup = BeautifulSoup(html, 'html.parser')
+    print(html_soup)
     return [
         url.strip()
         for url in html_soup.find_all("textarea")[0].text.split("\n")
@@ -39,9 +40,10 @@ def split_pre_post(images: List[str]) -> Tuple[List[str], List[str]]:
     "Split images into the pre- and post-disaster images."
     images_pre = [x for x in images if 'pre-' in x.split('/')[-4]]
     images_post = [x for x in images if 'post-' in x.split('/')[-4]]
-
+    if len(images_pre) == 0 and len(images_post) == 0:
+        images_pre = [x for x in images if '/pre/' in x]
+        images_post = [x for x in images if '/post/' in x]
     return images_pre, images_post
-
 
 def download_images(
     images: List[Tuple[str, str]],
