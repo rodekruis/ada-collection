@@ -229,13 +229,22 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str]) -> gpd.GeoDataF
                 }), ignore_index=True)
 
     if len(df.crs.unique()) > 1:
-        raise Exception(f'ERROR: multiple CRS found: {df.crs.unique()}')
-
-    crs_proj = df.crs.unique()[0]
-    gdf = gpd.GeoDataFrame({'geometry': df.geometry.tolist(),
-                            'file': df.file.tolist(),
-                            'pre-post': df['pre-post'].tolist()},
-                           crs=crs_proj)
+        print(f'WARNING: multiple CRS found, reprojecting {df.crs.unique()}')
+        gdf = gpd.GeoDataFrame()
+        crs = df.crs.mode()
+        for ix, row in df.iterrows():
+            gdf_raster = gpd.GeoDataFrame({'geometry': [row['geometry']],
+                                           'file': [row['file']],
+                                           'pre-post': [row['pre-post']]},
+                                          crs=row['crs'])
+            gdf_raster = gdf_raster.to_crs(crs)
+            gdf = gdf.append(gdf_raster, ignore_index=True)
+    else:
+        crs_proj = df.crs.unique()[0]
+        gdf = gpd.GeoDataFrame({'geometry': df.geometry.tolist(),
+                                'file': df.file.tolist(),
+                                'pre-post': df['pre-post'].tolist()},
+                               crs=crs_proj)
 
     return gdf
 
@@ -339,7 +348,7 @@ def assign_images_to_tiles(
 
 @click.command()
 @click.option('--data', default='input', help='input')
-@click.option('--date', default='2020-08-04', help='date of the event (to divide pre- and post-disaster images)')
+@click.option('--date', default='2020-08-04', help='date of the event YYYY-MM-DD')
 @click.option('--zoom', default=12, help='zoom level of the tiles')
 @click.option('--dest', default='tile_index.geojson', help='output')
 @click.option('--exte', default='', help='save extents as')
