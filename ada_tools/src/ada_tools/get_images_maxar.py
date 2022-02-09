@@ -114,8 +114,8 @@ def main(disaster, dest, maxpre, maxpost, maxthreads, progress_format):
 
     # generate the destination paths
     paths = (
-        [(url, os.path.join(dest, "pre-event", url.split("/")[-1])) for url in images_pre] +
-        [(url, os.path.join(dest, "post-event", url.split("/")[-1])) for url in images_post]
+        [(url, os.path.join(dest, "pre-event", url.replace("/", "-").replace("https://opendata.digitalglobe.com/", ""))) for url in images_pre] +
+        [(url, os.path.join(dest, "post-event", url.replace("/", "-").replace("https://opendata.digitalglobe.com/", ""))) for url in images_post]
     )
 
     download_images(
