@@ -6,8 +6,17 @@ import geopandas as gpd
 import pandas as pd
 import os
 from ada_tools.align_raster import align, translate
+from azure.storage.blob import BlobServiceClient
 from tqdm import tqdm
 from shapely.geometry import Polygon
+
+
+def download_blob(container, blobpath, filepath, secret):
+    blob_service_client = BlobServiceClient.from_connection_string(secret)
+    blob_client = blob_service_client.get_blob_client(container=container, blob=blobpath)
+    with open(filepath, "wb") as download_file:
+        download_file.write(blob_client.download_blob().readall())
+
 
 def get_extent(raster: str) -> gpd.GeoDataFrame:
     """
@@ -43,24 +52,28 @@ def get_extent(raster: str) -> gpd.GeoDataFrame:
 
 
 @click.command()
+@click.option('--ext', default='extents.geojson', help='input buildings extents')
 @click.option('--builds', default='input', help='input buildings directory')
+@click.option('--container', help='blob storage container')
+@click.option('--secret', help='blob storage secret')
 @click.option('--raster', default='input', help='input raster')
 @click.option('--refbuilds', default='buildings.geojson', help='input reference buildings')
 @click.option('--dest', default='buildings.geojson', help='output')
-def main(builds, raster, refbuilds, dest):
+def main(ext, builds, container, secret, raster, refbuilds, dest):
     """
     check if builds cover raster, if yes align with refbuilds and save as dest
     """
     build_target = gpd.GeoDataFrame()
     gdf_raster = get_extent(raster)
     xmin, ymin, xmax, ymax = gdf_raster.total_bounds
-    gdf_builds_extents = gpd.read_file(os.path.join(builds, "extents.geojson"))
+    gdf_builds_extents = gpd.read_file(ext)
     gdf_builds_extents = gdf_builds_extents.rename(columns={'file': 'alternative_buildings_file'})
     res_intersection = gpd.overlay(gdf_raster, gdf_builds_extents, how='intersection')
     if not res_intersection.empty:
         for ix, row in res_intersection.iterrows():
             build_file = row["alternative_buildings_file"]
-            gdf_build = gpd.read_file(os.path.join(builds, build_file))
+            download_blob(container, os.path.join(builds, build_file), build_file, secret)
+            gdf_build = gpd.read_file(build_file)
             gdf_build_in_raster = gdf_build.cx[xmin:xmax, ymin:ymax]
             if not gdf_build_in_raster.empty:
                 build_target = build_target.append(gdf_build_in_raster, ignore_index=True)
