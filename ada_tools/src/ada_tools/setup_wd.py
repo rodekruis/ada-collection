@@ -70,8 +70,41 @@ def create_raster_mosaic(
     src_files = [os.path.join(data, name) for name in filenames if "merged" not in name]
     out_file = os.path.join(data, "merged.tif")
 
+    # windows = [
+    #     [tile.left, (tile.top+tile.bottom)/2, (tile.right+tile.left)/2, tile.top],
+    #     [(tile.right+tile.left)/2, (tile.top+tile.bottom)/2, tile.right, tile.top],
+    #     [tile.left, tile.bottom, (tile.right+tile.left)/2, (tile.top+tile.bottom)/2],
+    #     [(tile.right+tile.left)/2, tile.bottom, tile.right, (tile.top+tile.bottom)/2]
+    # ]
+    wind_extr = [tile.left, tile.bottom, tile.right, tile.top]
+
     if len(src_files) == 1:
-        shutil.copyfile(src_files[0], out_file)
+        # just crop
+        src = rasterio.open(src_files[0], "r")
+        window = src.window(wind_extr[0], wind_extr[1], wind_extr[2], wind_extr[3])
+        try:
+            raster = src.read(
+                window=window,
+                boundless=True,
+                fill_value=np.nan,
+                out_dtype=np.float64
+            )
+        except DatasetIOShapeError:
+            pass
+        if raster.shape[0] < 3:
+            pass
+        out_shape = raster.shape
+
+        # update the profile with the new shape and affine transform
+        profile = src.meta.copy()
+        profile.update(height=window.height,
+                       width=window.width,
+                       transform=rasterio.windows.transform(window, src.transform),
+                       dtype=np.int8)
+        raster = raster.astype(np.int8)
+
+        with rasterio.open(out_file, "w", **profile) as dst:
+            dst.write(raster)
     else:
         # The array size (out_shape) will be taken from the first image, along with a
         # corresponding profile (the set of metadata particular to that image) and.
@@ -80,14 +113,6 @@ def create_raster_mosaic(
         out_shape = None
         profile = None
         transform = None
-
-        # windows = [
-        #     [tile.left, (tile.top+tile.bottom)/2, (tile.right+tile.left)/2, tile.top],
-        #     [(tile.right+tile.left)/2, (tile.top+tile.bottom)/2, tile.right, tile.top],
-        #     [tile.left, tile.bottom, (tile.right+tile.left)/2, (tile.top+tile.bottom)/2],
-        #     [(tile.right+tile.left)/2, tile.bottom, tile.right, (tile.top+tile.bottom)/2]
-        # ]
-        wind_extr = [tile.left, tile.bottom, tile.right, tile.top]
         add_out_file = False
         mosaics = []
         mosaics_path = []
@@ -95,9 +120,7 @@ def create_raster_mosaic(
 
         for num_path, path in enumerate(src_files):
             src = rasterio.open(path, "r")
-
             window = src.window(wind_extr[0], wind_extr[1], wind_extr[2], wind_extr[3])
-
             try:
                 raster = src.read(
                     window=window,
