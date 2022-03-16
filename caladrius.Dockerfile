@@ -37,6 +37,7 @@ RUN mkdir $HOME/.conda &&\
     /bin/bash $HOME/miniconda.sh -b -p $HOME/conda &&\
     rm $HOME/miniconda.sh &&\
     $HOME/conda/bin/conda update -n base -c defaults conda
+
 # install caladrius
 WORKDIR /caladrius
 RUN /bin/bash caladrius_install.sh
