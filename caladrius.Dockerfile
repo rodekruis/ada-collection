@@ -28,6 +28,7 @@ WORKDIR /
 RUN apt-get update && \
     apt-get install -y --no-install-recommends git curl vim less
 RUN git clone --branch ada-0.1 https://github.com/rodekruis/caladrius.git
+
 # install conda
 ENV HOME="/root"
 ENV PATH="$HOME/conda/bin:$PATH"
