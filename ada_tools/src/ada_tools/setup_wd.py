@@ -87,7 +87,7 @@ def create_raster_mosaic(
                 window=window,
                 boundless=True,
                 fill_value=np.nan,
-                out_dtype=np.float64
+                out_dtype=np.int8
             )
         except DatasetIOShapeError:
             pass
@@ -118,7 +118,8 @@ def create_raster_mosaic(
         mosaics_path = []
         rasters = []
 
-        for num_path, path in enumerate(src_files):
+        for num_path, path in tqdm(enumerate(src_files)):
+
             src = rasterio.open(path, "r")
             window = src.window(wind_extr[0], wind_extr[1], wind_extr[2], wind_extr[3])
             try:
@@ -127,7 +128,7 @@ def create_raster_mosaic(
                     boundless=True,
                     out_shape=out_shape,
                     fill_value=np.nan,
-                    out_dtype=np.float64,
+                    out_dtype=np.int8,
                     resampling=Resampling.lanczos,
                 )
             except DatasetIOShapeError:
@@ -146,11 +147,17 @@ def create_raster_mosaic(
                                dtype=np.int8)
             rasters.append(raster)
 
-        raster_mosaic = agg(np.stack(rasters, axis=0))
-        raster_mosaic = raster_mosaic.astype(np.int8)
+            if num_path > 0:
 
-        with rasterio.open(out_file, "w", **profile) as dst:
-            dst.write(raster_mosaic)
+                raster_mosaic = agg(np.stack(rasters, axis=0))
+                raster_mosaic = raster_mosaic.astype(np.int8)
+
+                if num_path == len(src_files)-1:
+                    with rasterio.open(out_file, "w", **profile) as dst:
+                        dst.write(raster_mosaic)
+                else:
+                    rasters.clear()
+                    rasters = [raster_mosaic.copy()]
 
     # rasters = {0: [], 1: [], 2: [], 3: []}
     # profiles = {0: [], 1: [], 2: [], 3: []}
