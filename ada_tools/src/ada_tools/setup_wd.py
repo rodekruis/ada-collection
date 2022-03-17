@@ -18,6 +18,8 @@ from rasterio.enums import Resampling
 from rasterio.errors import DatasetIOShapeError
 import numpy as np
 from tqdm import tqdm
+import re
+from datetime import datetime
 
 
 class Tile(NamedTuple):
@@ -112,14 +114,15 @@ def create_raster_mosaic(
         # world coordinates, and will be calculated once the first window is generated.
         out_shape = None
         profile = None
-        transform = None
-        add_out_file = False
-        mosaics = []
-        mosaics_path = []
         rasters = []
 
-        for num_path, path in tqdm(enumerate(src_files)):
+        try:
+            src_files.sort(key=lambda x: datetime.strptime(re.search(r'\d{4}-\d{2}-\d{2}', x).group(), "%Y-%m-%d"),
+                           reverse=True)
+        except:
+            pass
 
+        for num_path, path in enumerate(tqdm(src_files, total=len(src_files))):
             src = rasterio.open(path, "r")
             window = src.window(wind_extr[0], wind_extr[1], wind_extr[2], wind_extr[3])
             try:
@@ -128,7 +131,7 @@ def create_raster_mosaic(
                     boundless=True,
                     out_shape=out_shape,
                     fill_value=np.nan,
-                    out_dtype=np.int8,
+                    out_dtype=np.float32,
                     resampling=Resampling.lanczos,
                 )
             except DatasetIOShapeError:
@@ -149,10 +152,11 @@ def create_raster_mosaic(
 
             if num_path > 0:
 
-                raster_mosaic = agg(np.stack(rasters, axis=0))
-                raster_mosaic = raster_mosaic.astype(np.int8)
+                raster_mosaic = rasters[0]
+                raster_mosaic[np.isnan(raster_mosaic)] = rasters[1][np.isnan(raster_mosaic)]
 
-                if num_path == len(src_files)-1:
+                if num_path == len(src_files) - 1:
+                    raster_mosaic = raster_mosaic.astype(np.int8)
                     with rasterio.open(out_file, "w", **profile) as dst:
                         dst.write(raster_mosaic)
                 else:

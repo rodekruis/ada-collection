@@ -13,6 +13,7 @@ import datetime
 import json
 from typing import List, Tuple, Optional
 import pathlib
+from tqdm import tqdm
 
 
 class Tile():
@@ -198,7 +199,7 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str]) -> gpd.GeoDataF
     """
     rasters_all = rasters_pre + rasters_post
     df = pd.DataFrame()
-    for raster in rasters_all:
+    for raster in tqdm(rasters_all):
         with rasterio.open(raster) as raster_meta:
             try:
                 bounds = raster_meta.bounds
