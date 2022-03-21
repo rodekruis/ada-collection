@@ -353,7 +353,6 @@ def assign_images_to_tiles(
 @click.option('--zoom', default=12, help='zoom level of the tiles')
 @click.option('--dest', default='tile_index.geojson', help='output')
 @click.option('--exte', default='', help='save extents as')
-@click.option('--debug/--no-debug', default=False)
 def main(data, date, zoom, dest, exte, debug):
     """
     Using the images in the `data` folder, divide the area into tiles.  The output
@@ -362,9 +361,6 @@ def main(data, date, zoom, dest, exte, debug):
     """
     date_event = datetime.datetime.strptime(date, "%Y-%m-%d")
     rasters_pre, rasters_post = divide_images(data, date_event)
-    if debug:
-        rasters_pre = rasters_pre[:100]
-        rasters_post = rasters_pre[:100]
     print("getting image extents")
     gdf = get_extents(rasters_pre, rasters_post)
     if exte != '':
@@ -374,8 +370,8 @@ def main(data, date, zoom, dest, exte, debug):
         gdf_pos.to_file(exte.replace('.geojson', '-post-event.geojson'), driver="GeoJSON")
     print("generating tiles")
     df_tiles = generate_tiles(gdf, zoom)
-    # print("assigning images to tiles")
-    # df_tiles = assign_images_to_tiles(df_tiles, gdf)
+    print("assigning images to tiles")
+    df_tiles = assign_images_to_tiles(df_tiles, gdf)
     print("saving index")
     df_tiles.to_file(dest, driver="GeoJSON")
 
