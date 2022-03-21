@@ -230,24 +230,23 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str]) -> gpd.GeoDataF
                 }), ignore_index=True)
 
     gdf = gpd.GeoDataFrame()
-    if len(df.crs.unique()) > 1:
-        crs_proj = df.crs.mode().values[0]
-        print(f'WARNING: multiple CRS found {df.crs.unique()}, reprojecting to {crs_proj}')
+    crs_ref = "EPSG:4326"
+    if any(crs_ref != crs for crs in df.crs.unique()):
+        print(f'WARNING: multiple CRS found {df.crs.unique()}, reprojecting to {crs_ref}')
         for crs in df.crs.unique():
             df_crs = df[df['crs'] == crs].copy()
             gdf_crs = gpd.GeoDataFrame({'geometry': df_crs.geometry.tolist(),
                                         'file': df_crs.file.tolist(),
                                         'pre-post': df_crs['pre-post'].tolist()},
                                        crs=crs)
-            if crs != crs_proj:
-                gdf_crs.to_crs(crs_proj)
+            if crs != crs_ref:
+                gdf_crs = gdf_crs.to_crs(crs_ref)
             gdf = gdf.append(gdf_crs, ignore_index=True)
     else:
-        crs_proj = df.crs.unique()[0]
         gdf = gpd.GeoDataFrame({'geometry': df.geometry.tolist(),
                                 'file': df.file.tolist(),
                                 'pre-post': df['pre-post'].tolist()},
-                               crs=crs_proj)
+                               crs=crs_ref)
     return gdf
 
 
