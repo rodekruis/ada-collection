@@ -229,24 +229,25 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str]) -> gpd.GeoDataF
                     'pre-post': tag
                 }), ignore_index=True)
 
+    gdf = gpd.GeoDataFrame()
     if len(df.crs.unique()) > 1:
         crs_proj = df.crs.mode().values[0]
         print(f'WARNING: multiple CRS found {df.crs.unique()}, reprojecting to {crs_proj}')
-        # gdf = gpd.GeoDataFrame()
-        # for ix, row in df.iterrows():
-        #     gdf_raster = gpd.GeoDataFrame({'geometry': [row['geometry']],
-        #                                    'file': [row['file']],
-        #                                    'pre-post': [row['pre-post']]},
-        #                                   crs=row['crs'])
-        #     gdf_raster = gdf_raster.to_crs(crs_proj)
-        #     gdf = gdf.append(gdf_raster, ignore_index=True)
+        for crs in df.crs.unique():
+            df_crs = df[df['crs'] == crs].copy()
+            gdf_crs = gpd.GeoDataFrame({'geometry': df_crs.geometry.tolist(),
+                                        'file': df_crs.file.tolist(),
+                                        'pre-post': df_crs['pre-post'].tolist()},
+                                       crs=crs)
+            if crs != crs_proj:
+                gdf_crs.to_crs(crs_proj)
+            gdf = gdf.append(gdf_crs, ignore_index=True)
     else:
         crs_proj = df.crs.unique()[0]
-
-    gdf = gpd.GeoDataFrame({'geometry': df.geometry.tolist(),
-                            'file': df.file.tolist(),
-                            'pre-post': df['pre-post'].tolist()},
-                           crs=crs_proj)
+        gdf = gpd.GeoDataFrame({'geometry': df.geometry.tolist(),
+                                'file': df.file.tolist(),
+                                'pre-post': df['pre-post'].tolist()},
+                               crs=crs_proj)
     return gdf
 
 
@@ -266,7 +267,7 @@ def generate_tiles(gdf: gpd.GeoDataFrame, zoom: int) -> gpd.GeoDataFrame:
     # Convert to WGS84 (EPSG:4326, the usual degrees of latitude and longitude) and get
     # the total area (i.e. the union of all bounding boxes).
     orig_crs = gdf.crs
-    gdf_wgs = gdf.to_crs('EPSG:4326')
+    gdf_wgs = gdf.copy() #to_crs('EPSG:4326')
     total_bounds = box(*gdf_wgs.total_bounds)
 
     # Divide the area of `total_bounds` into tiles with their size determined by the
@@ -292,11 +293,11 @@ def generate_tiles(gdf: gpd.GeoDataFrame, zoom: int) -> gpd.GeoDataFrame:
     # convert to GeoDataFrame
     gdf_tiles = gpd.GeoDataFrame(
         {'geometry': df_tiles.geometry.tolist(), 'tile': df_tiles.tile.tolist()},
-        crs='EPSG:4326',
+        crs=orig_crs, #'EPSG:4326',
     )
 
     # convert back from EPSG:4326 to whatever the default was
-    gdf_tiles = gdf_tiles.to_crs(orig_crs)
+    # gdf_tiles = gdf_tiles.to_crs(orig_crs)
 
     return gdf_tiles
 
@@ -370,8 +371,8 @@ def main(data, date, zoom, dest, exte):
         gdf_pos.to_file(exte.replace('.geojson', '-post-event.geojson'), driver="GeoJSON")
     print("generating tiles")
     df_tiles = generate_tiles(gdf, zoom)
-    print("assigning images to tiles")
-    df_tiles = assign_images_to_tiles(df_tiles, gdf)
+    # print("assigning images to tiles")
+    # df_tiles = assign_images_to_tiles(df_tiles, gdf)
     print("saving index")
     df_tiles.to_file(dest, driver="GeoJSON")
 
