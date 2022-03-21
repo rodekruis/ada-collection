@@ -184,9 +184,6 @@ def divide_images(
 def get_extents(rasters_pre: List[str], rasters_post: List[str]) -> gpd.GeoDataFrame:
     """
     Get the geographical boundary of each raster image.
-    All rasters are assumed to use the same CRS (coordinate reference system). No
-    conversion is done if different CRSes are encountered; an exception will be thrown
-    instead.
 
     Arguments:
       rasters_pre: list of pre-disaster image paths
@@ -248,6 +245,66 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str]) -> gpd.GeoDataF
                                 'pre-post': df['pre-post'].tolist()},
                                crs=crs_ref)
     return gdf
+
+
+def generate_dummy_tiles(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    """
+    Generate dummy tiles based on maxar naming convention
+    """
+
+    # Divide the area of `total_bounds` into tiles with their size determined by the
+    # `zoom` parameter.
+
+    # create DataFrame of tiles
+    df_tiles = pd.DataFrame()
+    unique_indices = []
+    for ix, row in gdf.iterrows():
+        filename = row["file"]
+        m = re.search("[0-9]{12}", filename)
+        df_tiles = df_tiles.append(pd.Series({'tile': m.group(0)}), ignore_index=True)
+
+    df_tiles['pre-event'] = [[] for x in range(len(df_tiles))]
+    df_tiles['post-event'] = [[] for x in range(len(df_tiles))]
+    for ixt, rowt in df_tiles.iterrows():
+        pre_event_images, post_event_images = [], []
+        gdf_ = gdf[gdf["file"].str.contains(rowt["tile"])]
+        geom = None
+        for ix, row in gdf_.iterrows():
+            geom = row["geometry"]
+            if row['pre-post'] == 'pre-event':
+                pre_event_images.append(row['file'])
+            else:
+                post_event_images.append(row['file'])
+        if len(pre_event_images) > 0:
+            df_tiles.at[ixt, 'pre-event'] = pre_event_images
+        else:
+            df_tiles.at[ixt, 'pre-event'] = np.nan
+        if len(post_event_images) > 0:
+            df_tiles.at[ixt, 'post-event'] = post_event_images
+        else:
+            df_tiles.at[ixt, 'post-event'] = np.nan
+        df_tiles.at[ixt, 'geometry'] = geom
+
+    # drop tiles that do not contain both pre- and post-event images
+    df_tiles = df_tiles[(~pd.isna(df_tiles['pre-event'])) & (~pd.isna(df_tiles['post-event']))]
+
+    # The pre-event and post-event columns contain lists of filenames, but geopandas
+    # doesn't allow lists as GeoJSON properties to maintain compatibility with
+    # shapefiles. We can work around this by converting them to dictionaries.
+    df_tiles.loc[:, "pre-event"] = df_tiles["pre-event"].map(lambda l: dict(enumerate(l)))
+    df_tiles.loc[:, "post-event"] = df_tiles["post-event"].map(lambda l: dict(enumerate(l)))
+
+    gdf_tiles = gpd.GeoDataFrame(
+        {
+            'geometry': df_tiles.geometry.tolist(),
+            'tile': df_tiles.tile.tolist(),
+            'pre-event': df_tiles['pre-event'].tolist(),
+            'post-event': df_tiles['post-event'].tolist()
+        },
+        crs=gdf.crs,
+    )
+
+    return gdf_tiles
 
 
 def generate_tiles(gdf: gpd.GeoDataFrame, zoom: int) -> gpd.GeoDataFrame:
@@ -353,7 +410,8 @@ def assign_images_to_tiles(
 @click.option('--zoom', default=12, help='zoom level of the tiles')
 @click.option('--dest', default='tile_index.geojson', help='output')
 @click.option('--exte', default='', help='save extents as')
-def main(data, date, zoom, dest, exte):
+@click.option('--maxar-tiling/--no-maxar-tiling', default=False)
+def main(data, date, zoom, dest, exte, maxar_tiling):
     """
     Using the images in the `data` folder, divide the area into tiles.  The output
     written to `dest` is a GeoJSON file containing a collection of tiles, each with a
@@ -368,10 +426,14 @@ def main(data, date, zoom, dest, exte):
         gdf_pre.to_file(exte.replace('.geojson', '-pre-event.geojson'), driver="GeoJSON")
         gdf_pos = gdf[gdf['pre-post'] == 'post-event']
         gdf_pos.to_file(exte.replace('.geojson', '-post-event.geojson'), driver="GeoJSON")
-    print("generating tiles")
-    df_tiles = generate_tiles(gdf, zoom)
-    print("assigning images to tiles")
-    df_tiles = assign_images_to_tiles(df_tiles, gdf)
+    if maxar_tiling:
+        print("generating dummy tiles")
+        df_tiles = generate_dummy_tiles(gdf)
+    else:
+        print("generating tiles")
+        df_tiles = generate_tiles(gdf, zoom)
+        print("assigning images to tiles")
+        df_tiles = assign_images_to_tiles(df_tiles, gdf)
     print("saving index")
     df_tiles.to_file(dest, driver="GeoJSON")
 
