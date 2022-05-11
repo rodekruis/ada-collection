@@ -216,18 +216,22 @@ def create_raster_mosaic_tiled(
                                dtype=np.int8)
             rasters.append(raster)
 
-            if num_path > 0:
-
+            if num_path > 0 and len(rasters) > 0:
                 raster_mosaic = rasters[0]
-                raster_mosaic[np.isnan(raster_mosaic)] = rasters[1][np.isnan(raster_mosaic)]
+                try:
+                    raster_mosaic[np.isnan(raster_mosaic)] = rasters[1][np.isnan(raster_mosaic)]
 
-                if num_path == len(src_files) - 1:
+                    if num_path == len(src_files) - 1:
+                        raster_mosaic = raster_mosaic.astype(np.int8)
+                        with rasterio.open(out_file, "w", **profile) as dst:
+                            dst.write(raster_mosaic)
+                    else:
+                        rasters.clear()
+                        rasters = [raster_mosaic.copy()]
+                except:
                     raster_mosaic = raster_mosaic.astype(np.int8)
                     with rasterio.open(out_file, "w", **profile) as dst:
                         dst.write(raster_mosaic)
-                else:
-                    rasters.clear()
-                    rasters = [raster_mosaic.copy()]
 
     # rasters = {0: [], 1: [], 2: [], 3: []}
     # profiles = {0: [], 1: [], 2: [], 3: []}
