@@ -233,6 +233,33 @@ def create_raster_mosaic_tiled(
                     with rasterio.open(out_file, "w", **profile) as dst:
                         dst.write(raster_mosaic)
 
+    # if no out_file was created
+    if not os.path.exists(out_file):
+        # just crop the first and save as out_file
+        src = rasterio.open(src_files[0], "r")
+        window = src.window(wind_extr[0], wind_extr[1], wind_extr[2], wind_extr[3])
+        try:
+            raster = src.read(
+                window=window,
+                boundless=True,
+                fill_value=np.nan,
+                out_dtype=np.int8
+            )
+        except DatasetIOShapeError:
+            pass
+        if raster.shape[0] < 3:
+            pass
+        out_shape = raster.shape
+        profile = src.meta.copy()
+        profile.update(height=window.height,
+                       width=window.width,
+                       transform=rasterio.windows.transform(window, src.transform),
+                       dtype=np.int8)
+        raster = raster.astype(np.int8)
+
+        with rasterio.open(out_file, "w", **profile) as dst:
+            dst.write(raster)
+
     # rasters = {0: [], 1: [], 2: [], 3: []}
     # profiles = {0: [], 1: [], 2: [], 3: []}
 
