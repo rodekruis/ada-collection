@@ -226,8 +226,11 @@ def create_raster_mosaic_tiled(
 
                     if num_path == len(src_files) - 1:
                         raster_mosaic = raster_mosaic.astype(np.int8)
-                        with rasterio.open(out_file, "w", **profile) as dst:
-                            dst.write(raster_mosaic)
+                        try:
+                            with rasterio.open(out_file, "w", **profile) as dst:
+                                dst.write(raster)
+                        except RasterioIOError:
+                            copyfile(rasters[0], out_file)
                     else:
                         rasters.clear()
                         rasters = [raster_mosaic.copy()]
