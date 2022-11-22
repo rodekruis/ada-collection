@@ -464,13 +464,13 @@ def main(data, index, id, dest, maxar_tiling):
             os.makedirs(img_path, exist_ok=True)
             if 'pre-event' in image:
                 img_path = os.path.expanduser(dest)
-            copyfile(find_file(image), os.path.join(img_path, image))
+            copyfile(find_file(image, data), os.path.join(img_path, image))
         for image in tile.post_event:
             img_path = os.path.expanduser(os.path.join(dest, 'post-event'))
             os.makedirs(img_path, exist_ok=True)
             if 'post-event' in image:
                 img_path = os.path.expanduser(dest)
-            copyfile(find_file(image), os.path.join(img_path, image))
+            copyfile(find_file(image, data), os.path.join(img_path, image))
 
         create_raster_mosaic_tiled(tile, os.path.join(dest, 'pre-event'))
         create_raster_mosaic_tiled(tile, os.path.join(dest, 'post-event'))
