@@ -15,7 +15,7 @@ import sys
 from typing import Callable, List, NamedTuple
 import rasterio
 from rasterio.enums import Resampling
-from rasterio.errors import DatasetIOShapeError
+from rasterio.errors import DatasetIOShapeError, RasterioIOError
 import numpy as np
 from tqdm import tqdm
 import re
@@ -171,8 +171,11 @@ def create_raster_mosaic_tiled(
                        dtype=np.int8)
         raster = raster.astype(np.int8)
 
-        with rasterio.open(out_file, "w", **profile) as dst:
-            dst.write(raster)
+        try:
+            with rasterio.open(out_file, "w", **profile) as dst:
+                dst.write(raster)
+        except RasterioIOError:
+            copyfile(src_files[0], out_file)
     else:
         # The array size (out_shape) will be taken from the first image, along with a
         # corresponding profile (the set of metadata particular to that image) and.
