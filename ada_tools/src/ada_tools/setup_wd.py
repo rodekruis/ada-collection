@@ -14,6 +14,7 @@ import shutil
 import sys
 from typing import Callable, List, NamedTuple
 import rasterio
+from rasterio.merge import merge
 from rasterio.enums import Resampling
 from rasterio.errors import DatasetIOShapeError, RasterioIOError
 import numpy as np
@@ -252,7 +253,7 @@ def create_raster_mosaic_tiled(
             for fp in src_files:
                 src = rasterio.open(fp)
                 src_files_to_mosaic.append(src)
-            mosaic, out_trans = rasterio.merge(src_files_to_mosaic)
+            mosaic, out_trans = merge(src_files_to_mosaic)
             out_meta = src.meta.copy()
             out_meta.update(height=mosaic.shape[1],
                             width=mosaic.shape[2],
