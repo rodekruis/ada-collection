@@ -147,6 +147,7 @@ def create_raster_mosaic_tiled(
     wind_extr = [tile.left, tile.bottom, tile.right, tile.top]
 
     if len(src_files) == 1:
+        print("only one raster found, just crop")
         # just crop
         src = rasterio.open(src_files[0], "r")
         window = src.window(wind_extr[0], wind_extr[1], wind_extr[2], wind_extr[3])
@@ -177,6 +178,7 @@ def create_raster_mosaic_tiled(
         except RasterioIOError:
             copyfile(src_files[0], out_file)
     else:
+        print("multiple rasters found, try to merge them")
         # The array size (out_shape) will be taken from the first image, along with a
         # corresponding profile (the set of metadata particular to that image) and.
         # `transform` refers to an affine transformation matrix mapping pixel coordinates to
@@ -237,10 +239,34 @@ def create_raster_mosaic_tiled(
                         with rasterio.open(out_file, "w", **profile) as dst:
                             dst.write(raster_mosaic)
                     except RasterioIOError:
-                        copyfile(src_files[0], out_file)
+                        # this means that rasters are non-overlapping
+                        pass
 
     # if no out_file was created
     if not os.path.exists(out_file):
+        print("something went wrong!")
+        try:
+            print("try to merge all as they are")
+            # try to merge all as they are
+            src_files_to_mosaic = []
+            for fp in src_files:
+                src = rasterio.open(fp)
+                src_files_to_mosaic.append(src)
+            mosaic, out_trans = rasterio.merge(src_files_to_mosaic)
+            out_meta = src.meta.copy()
+            out_meta.update({"driver": "GTiff",
+                             "height": mosaic.shape[1],
+                             "width": mosaic.shape[2],
+                             "transform": out_trans})
+            with rasterio.open(out_file, "w", **profile) as dst:
+                dst.write(mosaic)
+        except:
+            print("failed to merge all as they are")
+            pass
+
+    # if still no out_file was created
+    if not os.path.exists(out_file):
+        print("everything went wrong! just crop the first raster and save as out_file")
         # just crop the first and save as out_file
         src = rasterio.open(src_files[0], "r")
         window = src.window(wind_extr[0], wind_extr[1], wind_extr[2], wind_extr[3])
