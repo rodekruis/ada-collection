@@ -254,11 +254,10 @@ def create_raster_mosaic_tiled(
                 src_files_to_mosaic.append(src)
             mosaic, out_trans = rasterio.merge(src_files_to_mosaic)
             out_meta = src.meta.copy()
-            out_meta.update({"driver": "GTiff",
-                             "height": mosaic.shape[1],
-                             "width": mosaic.shape[2],
-                             "transform": out_trans})
-            with rasterio.open(out_file, "w", **profile) as dst:
+            out_meta.update(height=mosaic.shape[1],
+                            width=mosaic.shape[2],
+                            transform=out_trans)
+            with rasterio.open(out_file, "w", **out_meta) as dst:
                 dst.write(mosaic)
         except:
             print("failed to merge all as they are")
