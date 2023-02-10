@@ -121,9 +121,11 @@ def get_image_list(root_folder, ROOT_FILENAME_PRE, ROOT_FILENAME_POST):
 
 
 def save_image(image, transform, out_meta, image_path, keepbandorder):
+    logging.info(image.shape)
     if not keepbandorder:
         image = np.swapaxes(image, 0, 2)
         image = np.swapaxes(image, 0, 1)
+    logging.info(image.shape)
     try:
         im = Image.fromarray(image)
     except TypeError:
