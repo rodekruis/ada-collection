@@ -120,9 +120,10 @@ def get_image_list(root_folder, ROOT_FILENAME_PRE, ROOT_FILENAME_POST):
     return image_list
 
 
-def save_image(image, transform, out_meta, image_path):
-    image = np.swapaxes(image, 0, 2)
-    image = np.swapaxes(image, 0, 1)
+def save_image(image, transform, out_meta, image_path, keepbandorder):
+    if not keepbandorder:
+        image = np.swapaxes(image, 0, 2)
+        image = np.swapaxes(image, 0, 1)
     try:
         im = Image.fromarray(image)
     except TypeError:
@@ -158,7 +159,7 @@ def get_image_path(geo_image_path, object_id, TEMP_DATA_FOLDER):
     return image_path
 
 
-def match_geometry(image_path, geo_image_file, geometry):
+def match_geometry(image_path, geo_image_file, geometry, keepbandorder):
     try:
         image, transform = rasterio.mask.mask(geo_image_file, geometry, crop=True)
         out_meta = geo_image_file.meta.copy()
@@ -178,7 +179,7 @@ def match_geometry(image_path, geo_image_file, geometry):
             np.sum(image) > 0
             and good_pixel_fraction >= NONZERO_PIXEL_THRESHOLD
         ):
-            return save_image(image, transform, out_meta, image_path)
+            return save_image(image, transform, out_meta, image_path, keepbandorder)
         else:
             logging.info(
                 f"something's wrong with the image: {np.sum(image)}, {good_pixel_fraction}")
@@ -186,7 +187,7 @@ def match_geometry(image_path, geo_image_file, geometry):
         return False
 
 
-def create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST, LABELS_FILE, TEMP_DATA_FOLDER):
+def create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST, LABELS_FILE, TEMP_DATA_FOLDER, keepbandorder):
     start_time = datetime.datetime.now()
 
     logger.info("Creating datapoints.")
@@ -220,7 +221,7 @@ def create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST,
 
                     if not os.path.exists(image_path):
                         save_success = match_geometry(
-                            image_path, geo_image_file, geometry
+                            image_path, geo_image_file, geometry, keepbandorder
                         )
                         if save_success:
                             count = count + 1
@@ -370,6 +371,12 @@ def main():
         help="force reprojection of buildings to given CRS"
     )
     parser.add_argument(
+        "--keepbandorder",
+        type=bool,
+        default=False,
+        help="keep order of bands"
+    )
+    parser.add_argument(
         "--datapre",
         type=str,
         default="",
@@ -447,7 +454,7 @@ def main():
         df = df.to_crs(args.reproject)
 
     if args.create_image_stamps:
-        create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST, LABELS_FILE, TEMP_DATA_FOLDER)
+        create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST, LABELS_FILE, TEMP_DATA_FOLDER, args.keepbandorder)
         split_datapoints(LABELS_FILE, TARGET_DATA_FOLDER, TEMP_DATA_FOLDER)
         create_inference_dataset(TEMP_DATA_FOLDER, TARGET_DATA_FOLDER)
     else:
