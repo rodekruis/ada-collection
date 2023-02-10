@@ -163,6 +163,7 @@ def match_geometry(image_path, geo_image_file, geometry):
         image, transform = rasterio.mask.mask(geo_image_file, geometry, crop=True)
         out_meta = geo_image_file.meta.copy()
         good_pixel_fraction = np.count_nonzero(image) / image.size
+        print(np.count_nonzero(image), image.size, len(image.shape), image.shape[0])
         if (
             np.sum(image) > 0
             and good_pixel_fraction >= NONZERO_PIXEL_THRESHOLD
