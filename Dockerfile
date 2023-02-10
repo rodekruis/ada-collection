@@ -5,7 +5,7 @@ ENV C_INCLUDE_PATH=/usr/include/gdal
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 
-RUN deps='build-essential cmake gdal-bin python3-gdal libgdal-dev kmod wget apache2' && \
+RUN deps='build-essential cmake gdal-bin python3-gdal libgdal-dev kmod wget apache2 ffmpeg libsm6 libxext6' && \
 	apt-get update && \
 	apt-get install -y $deps && \
 	pip install --upgrade pip && \
