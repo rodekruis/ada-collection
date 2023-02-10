@@ -125,6 +125,8 @@ def save_image(image, transform, out_meta, image_path, keepbandorder):
     if not keepbandorder:
         image = np.swapaxes(image, 0, 2)
         image = np.swapaxes(image, 0, 1)
+    else:
+        image = image.transpose(1, 2, 0)
     logging.info(image.shape)
     try:
         im = Image.fromarray(image)
