@@ -169,16 +169,19 @@ def match_geometry(image_path, geo_image_file, geometry):
         return False
     try:
         good_pixel_fraction = np.count_nonzero(image) / image.size
+        if len(image.shape) < 3:
+            logging.error("image has less than 3 bands")
+            return False
+        if image.shape[0] > 3:
+            image = image[:3, :, :]
         if (
             np.sum(image) > 0
             and good_pixel_fraction >= NONZERO_PIXEL_THRESHOLD
-            and len(image.shape) > 2
-            and image.shape[0] == 3
         ):
             return save_image(image, transform, out_meta, image_path)
         else:
             logging.info(
-                f"something's wrong: {np.sum(image)}, {good_pixel_fraction}, {len(image.shape)}, {image.shape[0]}")
+                f"something's wrong with the image: {np.sum(image)}, {good_pixel_fraction}")
     except ValueError:
         return False
 
