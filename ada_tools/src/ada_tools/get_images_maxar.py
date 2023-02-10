@@ -35,14 +35,19 @@ def get_maxar_image_urls(disaster: str) -> List[str]:
     ]
 
 
-def split_pre_post(images: List[str]) -> Tuple[List[str], List[str]]:
+def split_pre_post(images: List[str], splitdate) -> Tuple[List[str], List[str]]:
     "Split images into the pre- and post-disaster images."
-    images_pre = [x for x in images if 'pre-' in x.split('/')[-4]]
-    images_post = [x for x in images if 'post-' in x.split('/')[-4]]
-    if len(images_pre) == 0 and len(images_post) == 0:
-        images_pre = [x for x in images if '/pre/' in x]
-        images_post = [x for x in images if '/post/' in x]
+    if splitdate is not None:
+        images_post = [x for x in images if splitdate in x.split('/')[-2]]
+        images_pre = [x for x in images if x not in images_post]
+    else:
+        images_pre = [x for x in images if 'pre-' in x.split('/')[-4]]
+        images_post = [x for x in images if 'post-' in x.split('/')[-4]]
+        if len(images_pre) == 0 and len(images_post) == 0:
+            images_pre = [x for x in images if '/pre/' in x]
+            images_post = [x for x in images if '/post/' in x]
     return images_pre, images_post
+
 
 def download_images(
     images: List[Tuple[str, str]],
@@ -79,6 +84,7 @@ def download_images(
 @click.command()
 @click.option('--disaster', default='mauritius-oil-spill', help='name of the disaster')
 @click.option('--dest', default='input', help='destination folder')
+@click.option('--splitdate', default=None, help='split pre- and post-disaster by date')
 @click.option('--maxpre', default=1000000, help='max number of pre-disaster images')
 @click.option('--maxpost', default=1000000, help='max number of post-disaster images')
 @click.option(
@@ -93,13 +99,13 @@ def download_images(
     default="MB",
     help="size unit to format the download progress bar"
 )
-def main(disaster, dest, maxpre, maxpost, maxthreads, progress_format):
+def main(disaster, dest, splitdate, maxpre, maxpost, maxthreads, progress_format):
     os.makedirs(dest, exist_ok=True)
     os.makedirs(dest+'/pre-event', exist_ok=True)
     os.makedirs(dest+'/post-event', exist_ok=True)
 
     urls = get_maxar_image_urls(disaster)
-    images_pre, images_post = split_pre_post(urls)
+    images_pre, images_post = split_pre_post(urls, splitdate)
 
     # apply maxpre and maxpost
     images_pre = images_pre[:maxpre]
