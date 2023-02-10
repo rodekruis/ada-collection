@@ -159,11 +159,13 @@ def get_image_path(geo_image_path, object_id, TEMP_DATA_FOLDER):
 
 
 def match_geometry(image_path, geo_image_file, geometry):
+    logging.info(f"matching geometry")
     try:
         image, transform = rasterio.mask.mask(geo_image_file, geometry, crop=True)
+        logging.info("masked")
         out_meta = geo_image_file.meta.copy()
         good_pixel_fraction = np.count_nonzero(image) / image.size
-        print(np.count_nonzero(image), image.size, len(image.shape), image.shape[0])
+        logging.info(np.count_nonzero(image), image.size, len(image.shape), image.shape[0])
         if (
             np.sum(image) > 0
             and good_pixel_fraction >= NONZERO_PIXEL_THRESHOLD
@@ -195,6 +197,7 @@ def create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST,
                 except:
                     df = df.to_crs("EPSG:4326")
                 for index, row in tqdm(df.iterrows(), total=df.shape[0]):
+                    logging.info(f"processing building {index}")
 
                     bounds = row["geometry"].bounds
                     geometry = makesquare(*bounds)
