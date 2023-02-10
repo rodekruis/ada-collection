@@ -176,8 +176,10 @@ def match_geometry(image_path, geo_image_file, geometry):
             and image.shape[0] == 3
         ):
             return save_image(image, transform, out_meta, image_path)
+        else:
+            logging.info(
+                f"something's wrong: {np.sum(image)}, {good_pixel_fraction}, {len(image.shape)}, {image.shape[0]}")
     except ValueError:
-        logging.info(f"something's wrong: {np.sum(image)}, {good_pixel_fraction}, {len(image.shape)}, {image.shape[0]}")
         return False
 
 
