@@ -160,10 +160,9 @@ def get_image_path(geo_image_path, object_id, TEMP_DATA_FOLDER):
 
 def match_geometry(image_path, geo_image_file, geometry):
     logging.info(f"matching geometry")
+    image, transform = rasterio.mask.mask(geo_image_file, geometry, crop=True)
+    out_meta = geo_image_file.meta.copy()
     try:
-        image, transform = rasterio.mask.mask(geo_image_file, geometry, crop=True)
-        logging.info("masked")
-        out_meta = geo_image_file.meta.copy()
         good_pixel_fraction = np.count_nonzero(image) / image.size
         logging.info(np.count_nonzero(image), image.size, len(image.shape), image.shape[0])
         if (
