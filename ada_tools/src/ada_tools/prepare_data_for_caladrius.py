@@ -159,14 +159,16 @@ def get_image_path(geo_image_path, object_id, TEMP_DATA_FOLDER):
 
 
 def match_geometry(image_path, geo_image_file, geometry):
-    logging.info(f"matching geometry")
-    logging.info(f"image {geo_image_file.bounds}")
-    logging.info(f"building {geometry}")
-    image, transform = rasterio.mask.mask(geo_image_file, geometry, crop=True)
-    out_meta = geo_image_file.meta.copy()
+    try:
+        image, transform = rasterio.mask.mask(geo_image_file, geometry, crop=True)
+        out_meta = geo_image_file.meta.copy()
+    except ValueError:
+        logging.info(f"windows do not intersect")
+        logging.info(f"image {geo_image_file.bounds}")
+        logging.info(f"building {geometry}")
+        return False
     try:
         good_pixel_fraction = np.count_nonzero(image) / image.size
-        logging.info(np.count_nonzero(image), image.size, len(image.shape), image.shape[0])
         if (
             np.sum(image) > 0
             and good_pixel_fraction >= NONZERO_PIXEL_THRESHOLD
@@ -175,6 +177,7 @@ def match_geometry(image_path, geo_image_file, geometry):
         ):
             return save_image(image, transform, out_meta, image_path)
     except ValueError:
+        logging.info(f"something's wrong: {np.sum(image)}, {good_pixel_fraction}, {len(image.shape)}, {image.shape[0]}")
         return False
 
 
@@ -198,7 +201,6 @@ def create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST,
                 except:
                     df = df.to_crs("EPSG:4326")
                 for index, row in tqdm(df.iterrows(), total=df.shape[0]):
-                    logging.info(f"processing building {index}")
 
                     bounds = row["geometry"].bounds
                     geometry = makesquare(*bounds)
