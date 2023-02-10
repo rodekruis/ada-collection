@@ -124,11 +124,11 @@ def main(disaster, dest, splitdate, maxpre, maxpost, maxthreads, progress_format
         [(url, os.path.join(dest, "post-event", url.replace("https://opendata.digitalglobe.com/", "").replace("/", "-"))) for url in images_post]
     )
 
-    # download_images(
-    #     images=paths,
-    #     max_threads=maxthreads,
-    #     progress_format=size_numerator,
-    # )
+    download_images(
+        images=paths,
+        max_threads=maxthreads,
+        progress_format=size_numerator,
+    )
 
 
 if __name__ == "__main__":
