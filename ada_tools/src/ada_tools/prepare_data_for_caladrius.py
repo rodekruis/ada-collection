@@ -357,6 +357,12 @@ def main():
         help="input data path",
     )
     parser.add_argument(
+        "--reproject",
+        type=str,
+        default="",
+        help="force reprojection of buildings to given CRS"
+    )
+    parser.add_argument(
         "--datapre",
         type=str,
         default="",
@@ -429,6 +435,9 @@ def main():
             len(df)
         )
     )
+
+    if args.reproject != "":
+        df = df.to_crs(args.reproject)
 
     if args.create_image_stamps:
         create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST, LABELS_FILE, TEMP_DATA_FOLDER)
