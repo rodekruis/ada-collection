@@ -123,6 +123,8 @@ def get_image_list(root_folder, ROOT_FILENAME_PRE, ROOT_FILENAME_POST):
 def save_image(image, transform, out_meta, image_path):
     image = np.swapaxes(image, 0, 2)
     image = np.swapaxes(image, 0, 1)
+    if image.max() > 255.:
+        image = image * 255. / image.max()
     try:
         im = Image.fromarray(image)
     except TypeError:
@@ -162,14 +164,26 @@ def match_geometry(image_path, geo_image_file, geometry):
     try:
         image, transform = rasterio.mask.mask(geo_image_file, geometry, crop=True)
         out_meta = geo_image_file.meta.copy()
+    except ValueError:
+        logging.info(f"windows do not intersect")
+        logging.info(f"image {geo_image_file.bounds}")
+        logging.info(f"building {geometry}")
+        return False
+    try:
         good_pixel_fraction = np.count_nonzero(image) / image.size
+        if len(image.shape) < 3:
+            logging.error("image has less than 3 bands")
+            return False
+        if image.shape[0] > 3:
+            image = image[:3, :, :]
         if (
             np.sum(image) > 0
             and good_pixel_fraction >= NONZERO_PIXEL_THRESHOLD
-            and len(image.shape) > 2
-            and image.shape[0] == 3
         ):
             return save_image(image, transform, out_meta, image_path)
+        else:
+            logging.info(
+                f"something's wrong with the image: {np.sum(image)}, {good_pixel_fraction}")
     except ValueError:
         return False
 
@@ -352,6 +366,12 @@ def main():
         help="input data path",
     )
     parser.add_argument(
+        "--reproject",
+        type=str,
+        default="",
+        help="force reprojection of buildings to given CRS"
+    )
+    parser.add_argument(
         "--datapre",
         type=str,
         default="",
@@ -424,6 +444,9 @@ def main():
             len(df)
         )
     )
+
+    if args.reproject != "":
+        df = df.to_crs(args.reproject)
 
     if args.create_image_stamps:
         create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST, LABELS_FILE, TEMP_DATA_FOLDER)
