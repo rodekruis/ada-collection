@@ -444,9 +444,10 @@ def get_tile(df: gpd.GeoDataFrame, id: str) -> Tile:
 
 def find_file(filename, search_path):
     result = []
+    filename1 = filename.split("/")[-1]
     for root, dir, files in os.walk(search_path):
-        if filename in files:
-            result.append(os.path.join(root, filename))
+        if filename1 in files:
+            result.append(os.path.join(root, filename1))
     if len(result) > 0:
         return result[0]
     else:
