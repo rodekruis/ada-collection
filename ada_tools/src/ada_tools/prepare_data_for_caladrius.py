@@ -9,7 +9,7 @@ import rasterio
 import pandas as pd
 import geopandas
 from geopandas.tools import reverse_geocode
-
+from shapely.geometry import box
 import numpy as np
 
 # from PIL import Image
@@ -131,17 +131,6 @@ def save_image(image, transform, out_meta, image_path):
         image = image.astype(np.uint8)
         im = Image.fromarray(image)
     im.save(image_path)
-    # out_meta.update(
-    #     {
-    #         "driver": "PNG",
-    #         "height": image.shape[1],
-    #         "width": image.shape[2],
-    #         "transform": transform,
-    #         "dtype": np.uint16
-    #     }
-    # )
-    # with rasterio.open(image_path, "w", **out_meta) as dest:
-    #     dest.write(image)
     return image_path
 
 
@@ -165,9 +154,6 @@ def match_geometry(image_path, geo_image_file, geometry):
         image, transform = rasterio.mask.mask(geo_image_file, geometry, crop=True)
         out_meta = geo_image_file.meta.copy()
     except ValueError:
-        logging.info(f"windows do not intersect")
-        logging.info(f"image {geo_image_file.bounds}")
-        logging.info(f"building {geometry}")
         return False
     try:
         good_pixel_fraction = np.count_nonzero(image) / image.size
@@ -207,6 +193,9 @@ def create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST,
                     df = df.to_crs(geo_image_file.crs)
                 except:
                     df = df.to_crs("EPSG:4326")
+                if df.within(box(*geo_image_file.bounds)).empty:
+                    logging.info(f"image contains no building, skipping")
+                    continue
                 for index, row in tqdm(df.iterrows(), total=df.shape[0]):
 
                     bounds = row["geometry"].bounds
