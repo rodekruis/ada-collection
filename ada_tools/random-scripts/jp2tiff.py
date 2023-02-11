@@ -12,12 +12,14 @@ def main(dir):
         path_jp2 = str(path)
         path_tif = str(path).replace('.JP2', '.tif')
         print(path.name)
+        print(path_jp2)
+        print(path_tif)
 
         subprocess.run([
             "gdal_translate",
             "-of", "GTiff",
             "-co", "TILED=YES",
-            f'"{path_jp2}"', f'"{path_tif}"'
+            f'{path_jp2}', f'{path_tif}'
         ], shell=True)
 
 
