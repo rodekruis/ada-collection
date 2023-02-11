@@ -1,16 +1,20 @@
 # Importing required module
 import subprocess
 from pathlib import Path
-
+import os
 import click
 
 
 @click.command()
 @click.option('--dir', help='directory with jp2 images')
-def main(dir):
+@click.option('--dest', default="", help='target directory for geotiffs')
+def main(dir, dest):
     for path in Path(dir).rglob('*.JP2'):
         path_jp2 = str(path)
-        path_tif = str(path).replace('.JP2', '.tif')
+        if dest == "":
+            path_tif = str(path).replace('.JP2', '.tif')
+        else:
+            path_tif = os.path.join(dest, str(path.name).replace('.JP2', '.tif'))
         print(path.name)
         print(path_jp2)
         print(path_tif)
