@@ -38,6 +38,7 @@ def add_parser(subparser, formatter_class):
     out = parser.add_argument_group("Outputs")
     out.add_argument("--zoom", type=int, help="zoom level of tiles [required, except with --dir or --cover inputs]")
     help = "Output type (default: cover)"
+    out.add_argument("--crs", type=str, help="CRS of input rasters")
     out.add_argument("--type", type=str, choices=["cover", "extent", "geojson"], default="cover", help=help)
     out.add_argument("--union", action="store_true", help="if set, union adjacent tiles, imply --type geojson")
     out.add_argument("--splits", type=str, help="if set, shuffle and split in several cover subpieces (e.g 50/15/35)")
@@ -79,7 +80,10 @@ def main(args):
         for raster_file in args.raster:
             with rasterio_open(os.path.expanduser(raster_file)) as r:
                 try:
-                    w, s, e, n = transform_bounds(r.crs, "EPSG:4326", *r.bounds)
+                    if args.crs is not None:
+                        w, s, e, n = transform_bounds(args.crs, "EPSG:4326", *r.bounds)
+                    else:
+                        w, s, e, n = transform_bounds(r.crs, "EPSG:4326", *r.bounds)
                 except:
                     print("WARNING: projection error, SKIPPING: {}".format(raster_file), file=sys.stderr, flush=True)
                     continue
