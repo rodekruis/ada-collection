@@ -15,12 +15,7 @@ def main(dir):
         print(path_jp2)
         print(path_tif)
 
-        subprocess.run([
-            "gdal_translate",
-            "-of", "GTiff",
-            "-co", "TILED=YES",
-            f'{path_jp2}', f'{path_tif}'
-        ], shell=True)
+        subprocess.run(f"gdal_translate -of GTiff -co TILED=YES {path_jp2} {path_tif}", shell=True)
 
 
 if __name__ == "__main__":
