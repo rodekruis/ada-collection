@@ -10,7 +10,7 @@ import click
 @click.option('--dest', default="", help='target directory for geotiffs')
 def main(dir, dest):
 
-    for AOI in ['AOI1', 'AOI3', 'AOI2', 'AOI4', 'AOI5']:
+    for AOI in ['AOI3', 'AOI2', 'AOI4', 'AOI5']:
         os.makedirs(os.path.join(dir, AOI), exist_ok=True)
         for prepost in ['pre', 'post']:
             os.makedirs(os.path.join(dir, AOI, prepost+'-event'), exist_ok=True)
