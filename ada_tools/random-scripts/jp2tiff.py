@@ -11,14 +11,14 @@ def main(dir):
     for path in Path(dir).rglob('*.JP2'):
         path_jp2 = str(path)
         path_tif = str(path).replace('.JP2', '.tif')
-        print(path_jp2, '-->', path_tif)
+        print(path.name)
 
-        # subprocess.run([
-        #     "gdal_translate",
-        #     "-of", "GTiff",
-        #     "-co", "TILED=YES",
-        #     f'"{path_jp2}"', f'"{path_tif}"'
-        # ], shell=True)
+        subprocess.run([
+            "gdal_translate",
+            "-of", "GTiff",
+            "-co", "TILED=YES",
+            f'"{path_jp2}"', f'"{path_tif}"'
+        ], shell=True)
 
 
 if __name__ == "__main__":
