@@ -5,7 +5,7 @@ import click
 
 @click.command()
 @click.option('--dir', help='directory with results')
-@click.option('--path', default='.', help='string in path')
+@click.option('--path', default='', help='string in path')
 @click.option('--data', default='buildings-predictions.geojson', help='result filename')
 @click.option('--dest', default='buildings-predictions.geojson', help='output')
 def main(dir, path, data, dest):
