@@ -204,10 +204,10 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str]) -> gpd.GeoDataF
                 print('WARNING: raster has no bounds in tags')
                 bounds = np.nan
             try:
-                crs = raster_meta.meta['crs']
+                crs = raster_meta.meta['crs'].to_dict()['init']
             except:
                 print('WARNING: raster has no CRS in tags')
-                crs = np.nan
+                crs = "EPSG:32636"
             if raster in rasters_pre:
                 tag = 'pre-event'
             else:
@@ -221,7 +221,7 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str]) -> gpd.GeoDataF
             raster_relative_data = str(raster_relative_data)
             df = df.append(pd.Series({
                     'file': raster_relative_data,
-                    'crs': crs.to_dict()['init'],
+                    'crs': crs,
                     'geometry': box(*bounds),
                     'pre-post': tag
                 }), ignore_index=True)
