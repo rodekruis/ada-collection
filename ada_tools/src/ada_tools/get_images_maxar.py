@@ -10,7 +10,7 @@ from typing import List, Tuple, Dict
 from concurrent.futures import ThreadPoolExecutor
 import threading
 from tqdm import tqdm
-
+from datetime import datetime
 
 # Global mapping of thread ids to tqdm progress bars to show download progress.
 PROGRESS_BARS: Dict[int, tqdm] = {}
@@ -36,9 +36,9 @@ def get_maxar_image_urls(disaster: str) -> List[str]:
 
 
 def split_pre_post(images: List[str], splitdate) -> Tuple[List[str], List[str]]:
-    "Split images into the pre- and post-disaster images."
+    "Split images into the pre- and post-disaster images."        
     if splitdate is not None:
-        images_post = [x for x in images if splitdate in x.split('/')[-2]]
+        images_post = [x for x in images if datetime.strptime(x.split('/')[-2], '%Y-%m-%d') >= datetime.strptime(splitdate, '%Y-%m-%d')] 
         images_pre = [x for x in images if x not in images_post]
     else:
         images_pre = [x for x in images if 'pre-' in x.split('/')[-4]]
@@ -120,8 +120,8 @@ def main(disaster, dest, splitdate, maxpre, maxpost, maxthreads, progress_format
 
     # generate the destination paths
     paths = (
-        [(url, os.path.join(dest, "pre-event", url.replace("https://opendata.digitalglobe.com/", "").replace("/", "-"))) for url in images_pre] +
-        [(url, os.path.join(dest, "post-event", url.replace("https://opendata.digitalglobe.com/", "").replace("/", "-"))) for url in images_post]
+        [(url, os.path.join(dest, "pre-event", url.replace("https://maxar-opendata.s3.us-west-2.amazonaws.com/events/", "").replace("/", "-"))) for url in images_pre] +
+        [(url, os.path.join(dest, "post-event", url.replace("https://maxar-opendata.s3.us-west-2.amazonaws.com/events/", "").replace("/", "-"))) for url in images_post]
     )
 
     download_images(
