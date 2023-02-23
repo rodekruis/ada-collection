@@ -185,6 +185,7 @@ def create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST,
     image_list = get_image_list(ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST)
 
     # logger.info(len(image_list)) # 319
+    df['is_building_processed'] = False
 
     with open(LABELS_FILE, "w+") as labels_file:
         for geo_image_path in tqdm(image_list):
@@ -197,7 +198,7 @@ def create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST,
                 if not df['is_building_in_image'].any():
                     logging.info(f"image contains no building, skipping")
                     continue
-                df_in_image = df[df['is_building_in_image']]
+                df_in_image = df[(df['is_building_in_image'] == True) & (df['is_building_processed'] == False)]
                 for index, row in tqdm(df_in_image.iterrows(), total=df_in_image.shape[0]):
 
                     # identify data point
@@ -218,6 +219,7 @@ def create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST,
                         image_path, geo_image_file, geometry
                     )
                     if save_success:
+                        df.at[index, 'is_building_processed'] = True
                         count = count + 1
 
     delta = datetime.datetime.now() - start_time
