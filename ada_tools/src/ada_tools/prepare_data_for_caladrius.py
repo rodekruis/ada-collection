@@ -193,13 +193,12 @@ def create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST,
                     df = df.to_crs(geo_image_file.crs)
                 except:
                     df = df.to_crs("EPSG:4326")
-                if df.within(box(*geo_image_file.bounds)).empty:
+                df['is_building_in_image'] = df.within(box(*geo_image_file.bounds))
+                if not df['is_building_in_image'].any():
                     logging.info(f"image contains no building, skipping")
                     continue
-                for index, row in tqdm(df.iterrows(), total=df.shape[0]):
-
-                    bounds = row["geometry"].bounds
-                    geometry = makesquare(*bounds)
+                df_in_image = df[df['is_building_in_image']]
+                for index, row in tqdm(df_in_image.iterrows(), total=df_in_image.shape[0]):
 
                     # identify data point
                     if "OBJECTID" in row.keys():
@@ -209,12 +208,17 @@ def create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST,
 
                     image_path = get_image_path(geo_image_path, object_id, TEMP_DATA_FOLDER)
 
-                    if not os.path.exists(image_path):
-                        save_success = match_geometry(
-                            image_path, geo_image_file, geometry
-                        )
-                        if save_success:
-                            count = count + 1
+                    if os.path.exists(image_path):
+                        continue
+
+                    bounds = row["geometry"].bounds
+                    geometry = makesquare(*bounds)
+
+                    save_success = match_geometry(
+                        image_path, geo_image_file, geometry
+                    )
+                    if save_success:
+                        count = count + 1
 
     delta = datetime.datetime.now() - start_time
 
