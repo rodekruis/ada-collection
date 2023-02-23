@@ -190,6 +190,7 @@ def create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST,
     with open(LABELS_FILE, "w+") as labels_file:
         for geo_image_path in tqdm(image_list):
             with rasterio.open(geo_image_path) as geo_image_file:
+                print(f'buildings left to process: {len(df[df["is_building_processed"] == False])}')
                 try:
                     df = df.to_crs(geo_image_file.crs)
                 except:
@@ -219,8 +220,8 @@ def create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST,
                         image_path, geo_image_file, geometry
                     )
                     if save_success:
-                        df.at[index, 'is_building_processed'] = True
                         count = count + 1
+                    df.at[index, 'is_building_processed'] = True
 
     delta = datetime.datetime.now() - start_time
 
