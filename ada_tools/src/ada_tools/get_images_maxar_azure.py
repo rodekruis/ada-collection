@@ -1,3 +1,4 @@
+import io
 import os
 import os.path
 import sys
@@ -6,21 +7,16 @@ import time
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import click
 from azure.storage.blob import BlobClient, BlobServiceClient, ContainerClient
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
-# TODO: use config.ini with configparser
-
-# connection_string = os.environ["AZURE_CONNECTION_STRING"]
-# container_name = os.environ["AZURE_CONTAINER_NAME"]
-
-connection_string = ""
-container_name = "redcross7270"
-
+# Azure blob storage connection string and container name
+connection_string = os.environ["CONNECTION_STRING"]
+container_name = os.environ["CONTAINER_NAME"]
 
 # Global mapping of thread ids to tqdm progress bars to show download progress.
 PROGRESS_BARS: Dict[int, tqdm] = {}
@@ -69,13 +65,15 @@ def download_and_upload_images_to_blob(
     images: List[Tuple[str, str]], max_threads: int = None, progress_format: float = 1e6
 ) -> None:
     """
+    Download images from a list of urls and upload them to Azure blob storage.
+
     list: List of tuples of the form (url, destination path).
     max_threads: Maximum number of concurrent threads to download from. If None,
         Python's heuristics are used.
     progress_format: Download progress is printed as bytes / `progress_format`. For
         example, a value of 1e3 would print as kilobytes, 1e6 as megabytes, and so on.
     """
-
+    # Create the blob service client
     blob_service_client = BlobServiceClient.from_connection_string(connection_string)
     container_client = blob_service_client.get_container_client(container_name)
 
@@ -84,21 +82,63 @@ def download_and_upload_images_to_blob(
     if not container_client.exists():
         container_client.create_container()
 
-    def upload_stream_to_blob(blob_name, data_stream):
+    # reporthook function to update the progress bars
+    def _reporthook(count, block_size, total_size):
+        pbar = PROGRESS_BARS[threading.get_ident()]
+        pbar.total = total_size / progress_format
+        pbar.update(block_size / progress_format)
+
+    def upload_stream_to_blob(blob_name: Optional[str], data_stream: io.BytesIO) -> None:
         blob_client = container_client.get_blob_client(blob_name)
         blob_client.upload_blob(data_stream)
 
-    def _download_and_upload(url_tuple):
+    def _download_and_upload(url_tuple: Tuple[str, str]) -> None:
         url, blob_name = url_tuple
         ident = threading.get_ident()
         PROGRESS_BARS[ident] = tqdm(desc=f"Thread {ident}")
 
+        def _response_read(response: Optional[Any], buffer: int) -> Tuple[int, bytes]:
+            data = response.read(buffer)
+            return len(data), data
+
+        # Streaming read function
+        def _streaming_read(response: Optional[Any], buffer_size: int = 8192) -> bytes:
+            '''
+            Reads a response in chunks and yields the chunks.
+            Note: The response header neesd have "Content-Length" to calculate the progress.
+            https://stackoverflow.com/a/41107237
+
+            response: urllib.request.urlopen response object
+            buffer_size: size of each chunk
+
+            returns: generator of bytes
+            '''
+            total_size = int(response.headers["Content-Length"])
+            count = 0
+            while True:
+                read_size, chunk = _response_read(response, buffer_size)
+                if not chunk:
+                    break
+                count += 1
+                _reporthook(count, read_size, total_size)
+                yield chunk
+
         with urllib.request.urlopen(url) as response:
-            data_stream = response.read()
+            data_stream_gen = _streaming_read(response)
+            data_stream = io.BytesIO(b"".join(data_stream_gen))
             upload_stream_to_blob(blob_name, data_stream)
-            pbar = PROGRESS_BARS[threading.get_ident()]
-            pbar.total = len(data_stream) / progress_format
-            pbar.update(len(data_stream) / progress_format)
+
+    # def _download_and_upload(url_tuple):
+    #     url, blob_name = url_tuple
+    #     ident = threading.get_ident()
+    #     PROGRESS_BARS[ident] = tqdm(desc=f"Thread {ident}")
+
+    #     with urllib.request.urlopen(url) as response:
+    #         data_stream = response.read()
+    #         upload_stream_to_blob(blob_name, data_stream)
+    #         pbar = PROGRESS_BARS[threading.get_ident()]
+    #         pbar.total = len(data_stream) / progress_format
+    #         pbar.update(len(data_stream) / progress_format)
 
     with ThreadPoolExecutor(max_workers=max_threads) as executor:
         executor.map(_download_and_upload, images)
