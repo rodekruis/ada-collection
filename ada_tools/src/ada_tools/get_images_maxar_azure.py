@@ -113,7 +113,13 @@ def download_and_upload_images_to_blob(
 
             returns: generator of bytes
             '''
-            total_size = int(response.headers["Content-Length"])
+            try:
+                total_size = int(response.headers["Content-Length"])
+            except KeyError:
+                print("Content-Length not found in response headers. Progress bar disabled.", 
+                      file=sys.stderr)
+                total_size = None
+
             count = 0
             while True:
                 read_size, chunk = _response_read(response, buffer_size)
@@ -127,18 +133,6 @@ def download_and_upload_images_to_blob(
             data_stream_gen = _streaming_read(response)
             data_stream = io.BytesIO(b"".join(data_stream_gen))
             upload_stream_to_blob(blob_name, data_stream)
-
-    # def _download_and_upload(url_tuple):
-    #     url, blob_name = url_tuple
-    #     ident = threading.get_ident()
-    #     PROGRESS_BARS[ident] = tqdm(desc=f"Thread {ident}")
-
-    #     with urllib.request.urlopen(url) as response:
-    #         data_stream = response.read()
-    #         upload_stream_to_blob(blob_name, data_stream)
-    #         pbar = PROGRESS_BARS[threading.get_ident()]
-    #         pbar.total = len(data_stream) / progress_format
-    #         pbar.update(len(data_stream) / progress_format)
 
     with ThreadPoolExecutor(max_workers=max_threads) as executor:
         executor.map(_download_and_upload, images)
@@ -208,11 +202,6 @@ def main(disaster, dest, splitdate, maxpre, maxpost, maxthreads, progress_format
         for url in images_post
     ]
 
-    # download_images(
-    #     images=paths,
-    #     max_threads=maxthreads,
-    #     progress_format=size_numerator,
-    # )
 
     download_and_upload_images_to_blob(
         images=paths,
