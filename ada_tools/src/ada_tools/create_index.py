@@ -224,7 +224,7 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str], rasters_crs: st
                     'crs': crs,
                     'geometry': box(*bounds),
                     'pre-post': tag
-                })], ignore_index=True)
+                }, index=[0])], ignore_index=True)
 
     gdf = gpd.GeoDataFrame()
     crs_ref = "EPSG:4326"
