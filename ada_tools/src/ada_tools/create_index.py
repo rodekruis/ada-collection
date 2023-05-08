@@ -207,6 +207,7 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str], rasters_crs: st
                 crs = raster_meta.meta['crs'].to_dict()['init']
             except:
                 print(f'WARNING: raster has no CRS in tags, assigning {rasters_crs}')
+                print(raster_meta.meta)
                 crs = rasters_crs
             if raster in rasters_pre:
                 tag = 'pre-event'
@@ -227,23 +228,22 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str], rasters_crs: st
                 }, index=[0])], ignore_index=True)
 
     gdf = gpd.GeoDataFrame()
-    crs_ref = "EPSG:4326"
-    if any(crs_ref != crs for crs in df.crs.unique()):
-        print(f'WARNING: multiple CRS found {df.crs.unique()}, reprojecting to {crs_ref}')
+    if any(rasters_crs != crs for crs in df.crs.unique()):
+        print(f'WARNING: multiple CRS found {df.crs.unique()}, reprojecting to {rasters_crs}')
         for crs in df.crs.unique():
             df_crs = df[df['crs'] == crs].copy()
             gdf_crs = gpd.GeoDataFrame({'geometry': df_crs.geometry.tolist(),
                                         'file': df_crs.file.tolist(),
                                         'pre-post': df_crs['pre-post'].tolist()},
                                        crs=crs)
-            if crs != crs_ref:
-                gdf_crs = gdf_crs.to_crs(crs_ref)
+            if crs != rasters_crs:
+                gdf_crs = gdf_crs.to_crs(rasters_crs)
             gdf = gdf.append(gdf_crs, ignore_index=True)
     else:
         gdf = gpd.GeoDataFrame({'geometry': df.geometry.tolist(),
                                 'file': df.file.tolist(),
                                 'pre-post': df['pre-post'].tolist()},
-                               crs=crs_ref)
+                               crs=rasters_crs)
     return gdf
 
 
