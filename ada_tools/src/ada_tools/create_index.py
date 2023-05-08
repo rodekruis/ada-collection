@@ -194,6 +194,7 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str], rasters_crs: st
     """
     rasters_all = rasters_pre + rasters_post
     df = pd.DataFrame()
+    crs = ""
     for raster in tqdm(rasters_all):
         with rasterio.open(raster) as raster_meta:
             try:
@@ -243,7 +244,7 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str], rasters_crs: st
         gdf = gpd.GeoDataFrame({'geometry': df.geometry.tolist(),
                                 'file': df.file.tolist(),
                                 'pre-post': df['pre-post'].tolist()},
-                               crs=rasters_crs)
+                               crs=crs)
     return gdf
 
 
