@@ -205,7 +205,7 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str], rasters_crs: st
                 if 'init' in raster_meta.meta['crs'].to_dict().keys():
                     crs = raster_meta.meta['crs'].to_dict()['init']
                 else:
-                    crs = raster_meta['crs']
+                    crs = raster_meta.meta['crs']
             else:
                 print(f'WARNING: raster has no CRS in tags, assigning {rasters_crs}')
                 crs = rasters_crs
