@@ -241,6 +241,8 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str], rasters_crs: st
                 gdf_crs = gdf_crs.to_crs(rasters_crs)
             gdf = gdf.append(gdf_crs, ignore_index=True)
     else:
+        print(df)
+        print(crs)
         gdf = gpd.GeoDataFrame({'geometry': df.geometry.tolist(),
                                 'file': df.file.tolist(),
                                 'pre-post': df['pre-post'].tolist()},
