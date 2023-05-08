@@ -181,7 +181,7 @@ def divide_images(
     return rasters_pre, rasters_post
 
 
-def get_extents(rasters_pre: List[str], rasters_post: List[str]) -> gpd.GeoDataFrame:
+def get_extents(rasters_pre: List[str], rasters_post: List[str], rasters_crs: str) -> gpd.GeoDataFrame:
     """
     Get the geographical boundary of each raster image.
 
@@ -206,8 +206,8 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str]) -> gpd.GeoDataF
             try:
                 crs = raster_meta.meta['crs'].to_dict()['init']
             except:
-                print('WARNING: raster has no CRS in tags')
-                crs = "EPSG:32636"
+                print(f'WARNING: raster has no CRS in tags, assigning {rasters_crs}')
+                crs = rasters_crs
             if raster in rasters_pre:
                 tag = 'pre-event'
             else:
@@ -219,12 +219,12 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str]) -> gpd.GeoDataF
             else:
                 raster_relative_data = path.name
             raster_relative_data = str(raster_relative_data)
-            df = df.append(pd.Series({
+            df = pd.concat([df, pd.DataFrame({
                     'file': raster_relative_data,
                     'crs': crs,
                     'geometry': box(*bounds),
                     'pre-post': tag
-                }), ignore_index=True)
+                })], ignore_index=True)
 
     gdf = gpd.GeoDataFrame()
     crs_ref = "EPSG:4326"
@@ -406,12 +406,13 @@ def assign_images_to_tiles(
 
 @click.command()
 @click.option('--data', default='input', help='input')
+@click.option('--crs', default='EPSG:4326', help='imagery CRS')
 @click.option('--date', default='2020-08-04', help='date of the event YYYY-MM-DD')
 @click.option('--zoom', default=12, help='zoom level of the tiles')
 @click.option('--dest', default='tile_index.geojson', help='output')
 @click.option('--exte', default='', help='save extents as')
 @click.option('--maxar-tiling/--no-maxar-tiling', default=False)
-def main(data, date, zoom, dest, exte, maxar_tiling):
+def main(data, crs, date, zoom, dest, exte, maxar_tiling):
     """
     Using the images in the `data` folder, divide the area into tiles.  The output
     written to `dest` is a GeoJSON file containing a collection of tiles, each with a
@@ -420,7 +421,7 @@ def main(data, date, zoom, dest, exte, maxar_tiling):
     date_event = datetime.datetime.strptime(date, "%Y-%m-%d")
     rasters_pre, rasters_post = divide_images(data, date_event)
     print("getting image extents")
-    gdf = get_extents(rasters_pre, rasters_post)
+    gdf = get_extents(rasters_pre, rasters_post, crs)
     if exte != '':
         gdf_pre = gdf[gdf['pre-post'] == 'pre-event']
         gdf_pre.to_file(exte.replace('.geojson', '-pre-event.geojson'), driver="GeoJSON")
