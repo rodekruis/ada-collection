@@ -204,6 +204,7 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str], rasters_crs: st
                 bounds = np.nan
             if 'crs' in raster_meta.meta.keys():
                 if 'init' in raster_meta.meta['crs'].to_dict().keys():
+                    print('YOLO ', raster_meta.meta['crs'].to_dict())
                     crs = raster_meta.meta['crs'].to_dict()['init']
                 else:
                     wkt_str = str(raster_meta.meta['crs'])
