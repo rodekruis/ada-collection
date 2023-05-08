@@ -204,18 +204,15 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str], rasters_crs: st
                 bounds = np.nan
             if 'crs' in raster_meta.meta.keys():
                 if 'init' in raster_meta.meta['crs'].to_dict().keys():
-                    print('YOLO ', raster_meta.meta['crs'].to_dict())
                     crs = raster_meta.meta['crs'].to_dict()['init']
                 else:
                     wkt_str = str(raster_meta.meta['crs'])
-                    print(wkt_str)
                     match_epsg = re.findall(r'\"[0-9]{4}\"|\"[0-9]{5}\"', wkt_str)
                     if len(match_epsg) > 0:
-                        print(match_epsg[0:])
                         crs = f"EPSG:{match_epsg[-1][1:-1]}"
-                        print(crs)
                     else:
-                        print(f'WARNING: raster has no CRS in tags, assigning {rasters_crs}')
+                        print(f'WARNING: no EPSG code found in raster CRS, assigning {rasters_crs}')
+                        print(wkt_str)
                         crs = rasters_crs
             else:
                 print(f'WARNING: raster has no CRS in tags, assigning {rasters_crs}')
