@@ -209,7 +209,7 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str], rasters_crs: st
                 else:
                     wkt_str = str(raster_meta.meta['crs'])
                     print(wkt_str)
-                    match_epsg = re.findall(r'"[0-9]{4}" | "[0-9]{5}"', wkt_str)
+                    match_epsg = re.findall(r'\"[0-9]{4}\"|\"[0-9]{5}\"', wkt_str)
                     if len(match_epsg) > 0:
                         print(match_epsg[0:])
                         crs = f"EPSG:{match_epsg[-1][1:-1]}"
