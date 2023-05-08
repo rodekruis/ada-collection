@@ -201,7 +201,7 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str], rasters_crs: st
             except:
                 print('WARNING: raster has no bounds in tags')
                 bounds = np.nan
-            if 'crs' in raster_meta.keys():
+            if 'crs' in raster_meta.meta.keys():
                 if 'init' in raster_meta.meta['crs'].to_dict().keys():
                     crs = raster_meta.meta['crs'].to_dict()['init']
                 else:
