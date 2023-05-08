@@ -162,8 +162,6 @@ def divide_images(
     if os.path.exists(os.path.join(folder, 'pre-event')) and os.path.exists(os.path.join(folder, 'post-event')):
         rasters_pre = get_raster_in_dir(os.path.join(folder, 'pre-event'))
         rasters_post = get_raster_in_dir(os.path.join(folder, 'post-event'))
-        # rasters_pre = [os.path.join('pre-event', x) for x in rasters_pre]
-        # rasters_post = [os.path.join('post-event', x) for x in rasters_post]
     else:
         rasters_all = get_raster_in_dir(folder)
         rasters_pre, rasters_post = [], []
@@ -203,11 +201,12 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str], rasters_crs: st
             except:
                 print('WARNING: raster has no bounds in tags')
                 bounds = np.nan
-            try:
+            if 'crs' in raster_meta.meta.keys():
                 crs = raster_meta.meta['crs'].to_dict()['init']
-            except:
+            elif 'crs' in raster_meta.keys():
+                crs = raster_meta['crs']
+            else:
                 print(f'WARNING: raster has no CRS in tags, assigning {rasters_crs}')
-                print(raster_meta.meta)
                 crs = rasters_crs
             if raster in rasters_pre:
                 tag = 'pre-event'
@@ -228,7 +227,7 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str], rasters_crs: st
                 }, index=[0])], ignore_index=True)
 
     gdf = gpd.GeoDataFrame()
-    if any(rasters_crs != crs for crs in df.crs.unique()):
+    if df.crs.nunique() > 1:
         print(f'WARNING: multiple CRS found {df.crs.unique()}, reprojecting to {rasters_crs}')
         for crs in df.crs.unique():
             df_crs = df[df['crs'] == crs].copy()
