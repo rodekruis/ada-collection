@@ -162,8 +162,6 @@ def divide_images(
     if os.path.exists(os.path.join(folder, 'pre-event')) and os.path.exists(os.path.join(folder, 'post-event')):
         rasters_pre = get_raster_in_dir(os.path.join(folder, 'pre-event'))
         rasters_post = get_raster_in_dir(os.path.join(folder, 'post-event'))
-        # rasters_pre = [os.path.join('pre-event', x) for x in rasters_pre]
-        # rasters_post = [os.path.join('post-event', x) for x in rasters_post]
     else:
         rasters_all = get_raster_in_dir(folder)
         rasters_pre, rasters_post = [], []
@@ -181,7 +179,7 @@ def divide_images(
     return rasters_pre, rasters_post
 
 
-def get_extents(rasters_pre: List[str], rasters_post: List[str]) -> gpd.GeoDataFrame:
+def get_extents(rasters_pre: List[str], rasters_post: List[str], rasters_crs: str) -> gpd.GeoDataFrame:
     """
     Get the geographical boundary of each raster image.
 
@@ -196,6 +194,7 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str]) -> gpd.GeoDataF
     """
     rasters_all = rasters_pre + rasters_post
     df = pd.DataFrame()
+    crs = ""
     for raster in tqdm(rasters_all):
         with rasterio.open(raster) as raster_meta:
             try:
@@ -203,11 +202,21 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str]) -> gpd.GeoDataF
             except:
                 print('WARNING: raster has no bounds in tags')
                 bounds = np.nan
-            try:
-                crs = raster_meta.meta['crs'].to_dict()['init']
-            except:
-                print('WARNING: raster has no CRS in tags')
-                crs = "EPSG:32636"
+            if 'crs' in raster_meta.meta.keys():
+                if 'init' in raster_meta.meta['crs'].to_dict().keys():
+                    crs = raster_meta.meta['crs'].to_dict()['init']
+                else:
+                    wkt_str = str(raster_meta.meta['crs'])
+                    match_epsg = re.findall(r'\"[0-9]{4}\"|\"[0-9]{5}\"', wkt_str)
+                    if len(match_epsg) > 0:
+                        crs = f"EPSG:{match_epsg[-1][1:-1]}"
+                    else:
+                        print(f'WARNING: no EPSG code found in raster CRS, assigning {rasters_crs}')
+                        print(wkt_str)
+                        crs = rasters_crs
+            else:
+                print(f'WARNING: raster has no CRS in tags, assigning {rasters_crs}')
+                crs = rasters_crs
             if raster in rasters_pre:
                 tag = 'pre-event'
             else:
@@ -219,31 +228,32 @@ def get_extents(rasters_pre: List[str], rasters_post: List[str]) -> gpd.GeoDataF
             else:
                 raster_relative_data = path.name
             raster_relative_data = str(raster_relative_data)
-            df = df.append(pd.Series({
+            df = pd.concat([df, pd.DataFrame({
                     'file': raster_relative_data,
                     'crs': crs,
                     'geometry': box(*bounds),
                     'pre-post': tag
-                }), ignore_index=True)
+                }, index=[0])], ignore_index=True)
 
     gdf = gpd.GeoDataFrame()
-    crs_ref = "EPSG:4326"
-    if any(crs_ref != crs for crs in df.crs.unique()):
-        print(f'WARNING: multiple CRS found {df.crs.unique()}, reprojecting to {crs_ref}')
+    if df.crs.nunique() > 1:
+        print(f'WARNING: multiple CRS found {df.crs.unique()}, reprojecting to {rasters_crs}')
         for crs in df.crs.unique():
             df_crs = df[df['crs'] == crs].copy()
             gdf_crs = gpd.GeoDataFrame({'geometry': df_crs.geometry.tolist(),
                                         'file': df_crs.file.tolist(),
                                         'pre-post': df_crs['pre-post'].tolist()},
                                        crs=crs)
-            if crs != crs_ref:
-                gdf_crs = gdf_crs.to_crs(crs_ref)
+            if crs != rasters_crs:
+                gdf_crs = gdf_crs.to_crs(rasters_crs)
             gdf = gdf.append(gdf_crs, ignore_index=True)
     else:
+        print(df)
+        print(crs)
         gdf = gpd.GeoDataFrame({'geometry': df.geometry.tolist(),
                                 'file': df.file.tolist(),
                                 'pre-post': df['pre-post'].tolist()},
-                               crs=crs_ref)
+                               crs=crs)
     return gdf
 
 
@@ -406,12 +416,13 @@ def assign_images_to_tiles(
 
 @click.command()
 @click.option('--data', default='input', help='input')
+@click.option('--crs', default='EPSG:4326', help='imagery CRS')
 @click.option('--date', default='2020-08-04', help='date of the event YYYY-MM-DD')
 @click.option('--zoom', default=12, help='zoom level of the tiles')
 @click.option('--dest', default='tile_index.geojson', help='output')
 @click.option('--exte', default='', help='save extents as')
 @click.option('--maxar-tiling/--no-maxar-tiling', default=False)
-def main(data, date, zoom, dest, exte, maxar_tiling):
+def main(data, crs, date, zoom, dest, exte, maxar_tiling):
     """
     Using the images in the `data` folder, divide the area into tiles.  The output
     written to `dest` is a GeoJSON file containing a collection of tiles, each with a
@@ -420,7 +431,7 @@ def main(data, date, zoom, dest, exte, maxar_tiling):
     date_event = datetime.datetime.strptime(date, "%Y-%m-%d")
     rasters_pre, rasters_post = divide_images(data, date_event)
     print("getting image extents")
-    gdf = get_extents(rasters_pre, rasters_post)
+    gdf = get_extents(rasters_pre, rasters_post, crs)
     if exte != '':
         gdf_pre = gdf[gdf['pre-post'] == 'pre-event']
         gdf_pre.to_file(exte.replace('.geojson', '-pre-event.geojson'), driver="GeoJSON")
