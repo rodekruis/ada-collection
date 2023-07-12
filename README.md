@@ -50,9 +50,9 @@ docker exec -it ada-collection bash
 ```
 
 ### Manual Setup
-1. Install Python 3.7 and [pip](https://pypi.org/project/pip/)
-2. Install [Anaconda](https://www.anaconda.com/products/individual)
-3. Create and activate a new Anaconda environment
+1. Install Python 3.7 and [pip](https://pypi.org/project/pip/).
+2. Install [Anaconda](https://www.anaconda.com/products/individual).
+3. Create and activate a new Anaconda environment.
 ```
 conda create --name abdenv python=3.7 
 conda activate abdenv
@@ -62,6 +62,8 @@ conda activate abdenv
 cd ada_tools
 pip install .
 ```
+Note: Make sure libboost/boost is installed. 
+
 5. Move to `abd_model` and install
 ```
 cd ../abd_model
@@ -75,34 +77,40 @@ cd caladrius
 ```
 
 ## End-to-end example
-1. Get satellite images of typhoon Mangkhut from [Maxar Open Data](https://www.maxar.com/open-data)
+1) Get satellite images of typhoon Mangkhut from [Maxar Open Data](https://www.maxar.com/open-data)
 ```
 load-images --disaster typhoon-mangkhut --dest <workspace>/images
 ```
-2. Prepare images for building detection
+* Alternatively, load images from Azure blob storage
+```
+load-images-azure --disaster typhoon-mangkhut --dest <workspace>/images
+```
+* Set the `CONNECTION_STRING` and `CONTAINER_NAME` environmental variables corresponding to your Azure account
+
+2) Prepare images for building detection
 ```
 abd cover --raster <workspace>/images/pre-event/*.tif --zoom 17 --out <workspace>/abd/cover.csv
 abd tile --raster <workspace>/images/pre-event/*.tif --zoom 17 --cover <workspace>/abd/cover.csv --out <workspace>/abd/images --format tif --no_web_ui --config ada-tools/config.toml
 ```
-3. Detect buildings
+3) Detect buildings
 ```
 abd predict --dataset <workspace>/abd --cover <workspace>/abd/cover.csv --checkpoint <workspace>/neat-fullxview-epoch75.pth --out <workspace>/abd/predictions --metatiles --keep_borders --config ada-tools/config.toml
 ```
-4. Generate vector file with buildings and filter noise
+4) Generate vector file with buildings and filter noise
 ```
 abd vectorize --masks <workspace>/abd/predictions --type Building --out <workspace>/abd/buildings.geojson --config ada-tools/config.toml
 filter-buildings --data <workspace>/abd/buildings.geojson --dest <workspace>/abd/buildings-clean.geojson
 ```
-5. Prepare images for building damage classification
+5) Prepare images for building damage classification
 ```
 prepare-data --data <workspace>/images --buildings <workspace>/abd/buildings-clean.geojson --dest <workspace>/caladrius
 ```
-6. Classify building damage
+6) Classify building damage
 ```
 CUDA_VISIBLE_DEVICES="0" python caladrius/caladrius/run.py --run-name run --data-path <workspace>/caladrius --model-type attention --model-path <workspace>/best_model_wts.pkl --checkpoint-path <workspace>/caladrius/runs --batch-size 2 --classification-loss-type f1 --output-type classification --inference
 ```
-7. Generate vector file with buildings and damage labels
+7) Generate vector file with buildings and damage labels
 ```
 final-layer --builds <workspace>/abd/buildings-clean.geojson --damage <workspace>/caladrius/runs/run-input_size_32-learning_rate_0.001-batch_size_32/predictions/run-split_inference-epoch_001-model_inception-predictions.txt --out <workspace>/buildings-predictions.geojson --thresh 1
 ```
-8. Take your favorite [GIS application](https://en.wikipedia.org/wiki/Geographic_information_system) and visualize `<workspace>/buildings-predictions.geojson` in a nice map
+8) Take your favorite [GIS application](https://en.wikipedia.org/wiki/Geographic_information_system) and visualize `<workspace>/buildings-predictions.geojson` in a nice map

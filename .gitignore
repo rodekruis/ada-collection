@@ -1,3 +1,7 @@
+# vscode
+.vscode
+
+
 ## Added from ADA_tools
 ada_tools/src/ada_tools/data_processing/data/*
 **/geckodriver.log

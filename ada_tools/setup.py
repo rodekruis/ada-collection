@@ -5,7 +5,6 @@ For development:        "pip install -e .[dev]"
 """
 import setuptools
 
-
 with open("requirements.txt") as f:
     install_requires = f.read().splitlines()
 
@@ -27,6 +26,7 @@ setuptools.setup(
     entry_points={
         'console_scripts': [
             f"load-images = {PROJECT_NAME}.get_images_maxar:main",
+            f"load-images-azure = {PROJECT_NAME}.get_images_maxar_azure:main",
             f"filter-images = {PROJECT_NAME}.filter_images:main",
             f"filter-buildings = {PROJECT_NAME}.filter_buildings:main",
             f"final-layer = {PROJECT_NAME}.final_layer:main",

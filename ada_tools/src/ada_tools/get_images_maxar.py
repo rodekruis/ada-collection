@@ -1,16 +1,16 @@
-import urllib.request
-from bs4 import BeautifulSoup
-import sys
-import time
-import click
 import os
 import os.path
-from tqdm import tqdm
-from typing import List, Tuple, Dict
-from concurrent.futures import ThreadPoolExecutor
+import sys
 import threading
-from tqdm import tqdm
+import time
+import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+from typing import Dict, List, Tuple
+
+import click
+from bs4 import BeautifulSoup
+from tqdm import tqdm
 
 # Global mapping of thread ids to tqdm progress bars to show download progress.
 PROGRESS_BARS: Dict[int, tqdm] = {}
