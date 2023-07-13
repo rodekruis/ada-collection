@@ -32,7 +32,7 @@ RUN pip install .
 
 # install abd in env abd
 RUN conda create -y -n abd python=3.7
-RUN conda activate abd
+SHELL ["conda", "run", "-n", "abd", "/bin/bash", "-c"]
 WORKDIR /abd
 ADD abd_model .
 RUN pip install .
@@ -49,7 +49,7 @@ RUN /bin/bash caladrius_install.sh
 WORKDIR /
 
 # go back to env base
-RUN conda activate base
+SHELL ["conda", "run", "-n", "base", "/bin/bash", "-c"]
 
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
