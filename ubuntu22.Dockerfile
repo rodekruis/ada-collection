@@ -22,7 +22,8 @@ RUN mkdir $HOME/.conda &&\
     chmod 0755 $HOME/miniconda.sh &&\
     /bin/bash $HOME/miniconda.sh -b -p $HOME/conda &&\
     rm $HOME/miniconda.sh &&\
-    $HOME/conda/bin/conda update -n base -c defaults conda
+    $HOME/conda/bin/conda update -n base -c defaults conda &&\
+    conda init
 
 # install ada_tools in env base
 WORKDIR /ada_tools
