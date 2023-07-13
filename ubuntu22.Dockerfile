@@ -2,14 +2,16 @@ FROM nvidia/cuda:12.2.0-base-ubuntu22.04
 
 RUN apt-get update && \
 	apt-get install -y python3 python3-pip && \
-	apt-get install python-is-python3
+	apt-get install -y python-is-python3
 
 ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
 ENV C_INCLUDE_PATH=/usr/include/gdal
 
-RUN deps='build-essential curl gdal-bin libgdal-dev kmod wget apache2 libopencv-dev python3-opencv' && \
+RUN deps='build-essential curl gdal-bin libgdal-dev kmod wget apache2' && \
 	apt-get update && \
 	apt-get install -y $deps
+
+RUN apt-get install -y libopencv-dev python3-opencv
 
 RUN pip install --upgrade pip && \
 	pip install GDAL==$(gdal-config --version)
