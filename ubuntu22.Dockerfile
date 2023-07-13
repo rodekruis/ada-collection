@@ -1,9 +1,8 @@
 FROM nvidia/cuda:12.2.0-base-ubuntu22.04
 
 RUN apt-get update && \
-	apt-get install -y python3-pip && \
-	ln -sfn /usr/bin/python3.6 /usr/bin/python && \
-	ln -sfn /usr/bin/pip3 /usr/bin/pip
+	apt-get install -y python3 python3-pip && \
+	apt-get install python-is-python3
 
 ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
 ENV C_INCLUDE_PATH=/usr/include/gdal
