@@ -43,7 +43,7 @@ def divide_dataframe(df, shuffle=False):
 
 
 def get_num_disj(gdf):
-    df_sj = gpd.sjoin(gdf, gdf, how='left', op='intersects')
+    df_sj = gpd.sjoin(gdf, gdf, how='left', predicate='intersects')
     df_sj = df_sj.reset_index().rename(columns={'index': 'index_left'})
     return len(df_sj[df_sj['index_left'] != df_sj['index_right']])
 
@@ -109,7 +109,7 @@ def combine_and_merge(gdf_list_merged):
 
 
 def merge_touching_buildings(gdf):
-    df_sj = gpd.sjoin(gdf, gdf, how='left', op='intersects')
+    df_sj = gpd.sjoin(gdf, gdf, how='left', predicate='intersects')
     df_sj = df_sj.reset_index().rename(columns={'index': 'index_left'})
     num_disj_start = len(df_sj[df_sj['index_left'] != df_sj['index_right']])
     num_disj = num_disj_start
@@ -117,7 +117,7 @@ def merge_touching_buildings(gdf):
         df_sj = df_sj.dissolve(by='index_right').rename_axis(index={'index_right': 'index'})
         df_sj = df_sj.drop_duplicates(subset=['geometry'])
         df_sj = df_sj[['geometry']]
-        df_sj = gpd.sjoin(df_sj, df_sj, how='left', op='intersects')
+        df_sj = gpd.sjoin(df_sj, df_sj, how='left', predicate='intersects')
         df_sj = df_sj.reset_index().rename(columns={'index': 'index_left'})
         num_disj = len(df_sj[df_sj['index_left'] != df_sj['index_right']])
         if num_disj > num_disj_start:
@@ -171,7 +171,7 @@ def main(data, dest, crsmeters, waterbodies, area):
         gdf_water = gpd.read_file(waterbodies)
         if gdf.crs != gdf_water.crs:
             gdf = gdf.to_crs(gdf_water.crs)
-        gdf = gpd.sjoin(gdf, gdf_water, how='left', op='intersects')
+        gdf = gpd.sjoin(gdf, gdf_water, how='left', predicate='intersects')
         gdf = gdf[gdf['TYPE'].isna()]
         gdf = gdf[['geometry']]
 
