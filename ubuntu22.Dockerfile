@@ -7,7 +7,7 @@ RUN apt-get update && \
 ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
 ENV C_INCLUDE_PATH=/usr/include/gdal
 
-RUN deps='build-essential curl gdal-bin libgdal-dev kmod wget apache2' && \
+RUN deps='build-essential curl gdal-bin libgdal-dev kmod wget apache2 libopencv-dev python3-opencv' && \
 	apt-get update && \
 	apt-get install -y $deps
 
