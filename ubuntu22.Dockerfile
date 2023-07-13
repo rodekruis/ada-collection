@@ -10,7 +10,7 @@ ENV C_INCLUDE_PATH=/usr/include/gdal
 RUN deps='build-essential curl gdal-bin libgdal-dev kmod wget apache2' && \
 	apt-get update && \
 	apt-get install -y $deps
-
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install tzdata
 RUN apt-get install -y libopencv-dev python3-opencv
 
 RUN pip install --upgrade pip && \
