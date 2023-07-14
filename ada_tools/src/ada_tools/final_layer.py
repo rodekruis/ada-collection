@@ -25,10 +25,10 @@ def main(builds, damage, out, thresh):
             label = int(labels.loc[str(index), "label"])
             # binarize
             if thresh != "no":
-                if label > thresh:
-                    label = 1
+                if float(label) > float(thresh):
+                    label = 1.0
                 else:
-                    label = 0
+                    label = 0.0
             df.at[index, 'damage'] = label
         except:
             df.at[index, 'damage'] = np.nan
