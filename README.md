@@ -27,11 +27,11 @@ Your workspace should then look like
 ```
     <workspace>
     ├── ...
-    ├── neat-fullxview-epoch75.pth        # pre-trained building detection model
-    ├── caladrius_att_effnet4_v1.pkl.pkl  # pre-trained building damage classification model
-    ├── images                            # satellite images
-    │   ├── pre-event                     # before the disaster
-    │   └── post-event                    # after the disaster
+    ├── neat-fullxview-epoch75.pth    # pre-trained building detection model
+    ├── caladrius_att_effnet4_v1.pkl  # pre-trained building damage classification model
+    ├── images                        # satellite images
+    │   ├── pre-event                 # before the disaster
+    │   └── post-event                # after the disaster
     └── ...
 ```
 ### Using Docker
