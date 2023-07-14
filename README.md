@@ -16,7 +16,7 @@ The damage assessment framework & model is at [caladrius:ada-0.1](https://github
   * architecture: AlbuNet ([U-Net-like](https://arxiv.org/abs/1505.04597) encoder-decoder with a ResNet, ResNext or WideResNet encoder)
   * training: [xBD dataset](https://arxiv.org/pdf/1911.09296.pdf), 75 epochs
   * performance: [IoU](https://en.wikipedia.org/wiki/Jaccard_index) 0.79, [MCC](https://en.wikipedia.org/wiki/Matthews_correlation_coefficient) 0.75
-2. Download pre-trained building damage classification model: [best_model_wts.pkl](https://drive.google.com/file/d/1G3Wgjj9wIGovKKQ63_bwqqTGCJ1l27R7/view?usp=sharing)
+2. Download pre-trained building damage classification model: [caladrius_att_effnet4_v1.pkl](https://drive.google.com/file/d/1a_yQgHSvcatNp0KUeHmDtvdFUDJffOLq/view?usp=sharing)
   * architecture: pseudo-[siamese network](http://papers.nips.cc/paper/769-signature-verification-using-a-siamese-time-delay-neural-network) with two [ImageNet](https://ieeexplore.ieee.org/abstract/document/5206848)
 pre-trained [EffNet-B4](https://arxiv.org/pdf/1905.11946.pdf) models + attention
   * training: [xBD dataset](https://arxiv.org/pdf/1911.09296.pdf), 75 epochs
@@ -107,7 +107,7 @@ prepare-data --data <workspace>/images --buildings <workspace>/abd/buildings-cle
 ```
 6) Classify building damage
 ```
-CUDA_VISIBLE_DEVICES="0" python caladrius/caladrius/run.py --run-name run --data-path <workspace>/caladrius --model-type attention --model-path <workspace>/best_model_wts.pkl --checkpoint-path <workspace>/caladrius/runs --batch-size 2 --classification-loss-type f1 --output-type classification --inference
+CUDA_VISIBLE_DEVICES="0" python caladrius/caladrius/run.py --run-name run --data-path <workspace>/caladrius --model-type attentive --model-path <workspace>/caladrius_att_effnet4_v1.pkl --checkpoint-path <workspace>/caladrius/runs --batch-size 2 --classification-loss-type f1 --output-type classification --inference
 ```
 7) Generate vector file with buildings and damage labels
 ```
