@@ -38,7 +38,7 @@ Your workspace should then look like
 1. Install [Docker](https://www.docker.com/get-started).
 2. Download the [latest Docker Image](https://hub.docker.com/r/rodekruis/ada-collection)
 ```
-docker pull rodekruis/ada-collection
+docker pull jmargutti/ada-collection
 ```
 3. Create a docker container and connect it to a local directory (`<path-to-your-workspace>`)
 ```
