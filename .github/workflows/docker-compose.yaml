@@ -3,7 +3,7 @@ name: Update docker image in ACR
 on:
   push:
     branches:
-      - main
+      - master
     tags: [ "v*.*.*" ]
     
 env:
