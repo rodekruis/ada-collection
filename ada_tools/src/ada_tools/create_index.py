@@ -346,13 +346,13 @@ def generate_tiles(gdf: gpd.GeoDataFrame, zoom: int) -> gpd.GeoDataFrame:
     df_tiles = pd.DataFrame()
     for tile in tc:
         bounds_tile = np.array([tile.xmin, tile.ymin, tile.xmax, tile.ymax])
-        df_tiles = df_tiles.append(
+        df_tiles = pd.concat([df_tiles,
             pd.Series(
                 {
                     'geometry': box(*bounds_tile),
                     'tile': str(zoom_level)+'.'+str(tile.x)+'.'+str(tile.y)
                 }
-            ),
+            )],
             ignore_index=True
         )
 
