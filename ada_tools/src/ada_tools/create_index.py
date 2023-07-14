@@ -354,6 +354,7 @@ def generate_tiles(gdf: gpd.GeoDataFrame, zoom: int) -> gpd.GeoDataFrame:
                                   }
                               )], axis=1, ignore_index=True)
 
+    print(df_tiles)
     # convert to GeoDataFrame
     gdf_tiles = gpd.GeoDataFrame(
         {'geometry': df_tiles.geometry.tolist(), 'tile': df_tiles.tile.tolist()},
