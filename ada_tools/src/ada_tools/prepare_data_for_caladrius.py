@@ -161,10 +161,12 @@ def match_geometry(image_path, geo_image_file, geometry):
                 np.sum(image) > 0
                 and good_pixel_fraction >= NONZERO_PIXEL_THRESHOLD
         ):
-            return save_image(image, transform, out_meta, image_path)
+            save_image(image, transform, out_meta, image_path)
+            return True
         else:
             logging.info(
                 f"something's wrong with the image: {np.sum(image)}, {good_pixel_fraction}")
+            return False
     except ValueError:
         return False
 
@@ -174,8 +176,6 @@ def create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST,
 
     logger.info("Creating datapoints.")
     logger.info("Feature Size {}".format(len(df)))
-
-    count = 0
 
     image_list = get_image_list(ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST)
 
@@ -187,6 +187,7 @@ def create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST,
         for pre_or_post in ['pre', 'post']:
             image_list_pp = [image for image in image_list if f'{pre_or_post}-event' in image]
             print(f'starting {pre_or_post}-event')
+            count = 0
             for geo_image_path in tqdm(image_list_pp):
                 with rasterio.open(geo_image_path) as geo_image_file:
                     try:
@@ -204,7 +205,7 @@ def create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST,
                     df_in_image = df[(df['is_building_in_image'] == True) &
                                      (df[f'is_building_processed_{pre_or_post}'] == False)]
                     print(f'of which not yet processed: {len(df_in_image)}')
-                    for index, row in tqdm(df_in_image.iterrows(), total=df_in_image.shape[0]):
+                    for index, row in df_in_image.iterrows():  # tqdm(df_in_image.iterrows(), total=df_in_image.shape[0]):
 
                         # identify data point
                         if "OBJECTID" in row.keys():
@@ -226,10 +227,10 @@ def create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST,
                         if save_success:
                             count = count + 1
                         df.at[index, f'is_building_processed_{pre_or_post}'] = True
+            logger.info(f"Total buildings successfully saved for {pre_or_post}-event: {count}")
 
     delta = datetime.datetime.now() - start_time
-
-    logger.info("Created {} Datapoints in {}".format(count, delta))
+    logger.info("create_datapoints completed in {}".format(delta))
 
 
 def split_datapoints(filepath, TARGET_DATA_FOLDER, TEMP_DATA_FOLDER):
@@ -307,14 +308,16 @@ def create_inference_dataset(TEMP_DATA_FOLDER, TARGET_DATA_FOLDER):
     )
     if len(intersection) == 0:
         raise RuntimeError("no corresponding images pre- and post-disaster")
-    logger.info('Images found in both pre- and post-event: {}'.format(len(intersection)))
 
     n_img_to_rm = len(list(set(images_in_before_directory) - set(images_in_after_directory))) + \
                   len(list(set(images_in_after_directory) - set(images_in_before_directory)))
+
+    logger.info(f'Images found in both pre- and post-event: {len(intersection)} (out of {len(intersection)+n_img_to_rm})')
+
     logger.info(f'Removing {n_img_to_rm} non-overlapping images')
-    for image in list(set(images_in_before_directory) - set(images_in_after_directory)):
+    for image in tqdm(list(set(images_in_before_directory) - set(images_in_after_directory))):
         os.remove(os.path.join(temp_before_directory, image))
-    for image in list(set(images_in_after_directory) - set(images_in_before_directory)):
+    for image in tqdm(list(set(images_in_after_directory) - set(images_in_before_directory))):
         os.remove(os.path.join(temp_after_directory, image))
 
     os.rename(TEMP_DATA_FOLDER, os.path.join(TARGET_DATA_FOLDER, "inference").replace("\\", "/"))
