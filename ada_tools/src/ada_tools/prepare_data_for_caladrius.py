@@ -201,8 +201,8 @@ def create_datapoints(df, ROOT_DIRECTORY, ROOT_FILENAME_PRE, ROOT_FILENAME_POST,
                     if not df['is_building_in_image'].any():
                         logging.info(f"image contains no building, skipping")
                         continue
-                    df_in_image = df[(df['is_building_in_image'] is True) &
-                                     (df[f'is_building_processed_{pre_or_post}'] is False)]
+                    df_in_image = df[(df['is_building_in_image'] == True) &
+                                     (df[f'is_building_processed_{pre_or_post}'] == False)]
                     print(f'of which not yet processed: {len(df_in_image)}')
                     for index, row in tqdm(df_in_image.iterrows(), total=df_in_image.shape[0]):
 
