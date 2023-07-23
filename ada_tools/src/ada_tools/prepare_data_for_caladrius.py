@@ -296,36 +296,46 @@ def create_inference_dataset(TEMP_DATA_FOLDER, TARGET_DATA_FOLDER):
         x for x in os.listdir(temp_before_directory) if x.endswith(".png")
     ]
     if len(images_in_before_directory) == 0:
-        raise RuntimeError("no pre-disaster images of buildings")
+        raise RuntimeError("no pre-event images of buildings")
     images_in_after_directory = [
         x for x in os.listdir(temp_after_directory) if x.endswith(".png")
     ]
     if len(images_in_after_directory) == 0:
-        raise RuntimeError("no post-disaster images of buildings")
+        raise RuntimeError("no post-event images of buildings")
     intersection = list(
         set(images_in_before_directory) & set(images_in_after_directory)
     )
     if len(intersection) == 0:
         raise RuntimeError("no corresponding images pre- and post-disaster")
-    logger.info('Images moved to inference: {}'.format(len(intersection)))
+    logger.info('Images found in both pre- and post-event: {}'.format(len(intersection)))
 
-    inference_directory = os.path.join(TARGET_DATA_FOLDER, "inference").replace("\\", "/")
-    os.makedirs(inference_directory, exist_ok=True)
+    n_img_to_rm = len(list(set(images_in_before_directory) - set(images_in_after_directory))) + \
+                  len(list(set(images_in_after_directory) - set(images_in_before_directory)))
+    logger.info(f'Removing {n_img_to_rm} non-overlapping images')
+    for image in list(set(images_in_before_directory) - set(images_in_after_directory)):
+        os.remove(os.path.join(temp_before_directory, image))
+    for image in list(set(images_in_after_directory) - set(images_in_before_directory)):
+        os.remove(os.path.join(temp_after_directory, image))
 
-    inference_before_directory = os.path.join(inference_directory, "before").replace("\\", "/")
-    os.makedirs(inference_before_directory, exist_ok=True)
+    os.rename(TEMP_DATA_FOLDER, os.path.join(TARGET_DATA_FOLDER, "inference").replace("\\", "/"))
 
-    inference_after_directory = os.path.join(inference_directory, "after").replace("\\", "/")
-    os.makedirs(inference_after_directory, exist_ok=True)
-
-    for datapoint_name in tqdm(intersection):
-        before_image_src = os.path.join(temp_before_directory, datapoint_name).replace("\\", "/")
-        after_image_src = os.path.join(temp_after_directory, datapoint_name).replace("\\", "/")
-
-        before_image_dst = os.path.join(inference_before_directory, datapoint_name).replace("\\", "/")
-        after_image_dst = os.path.join(inference_after_directory, datapoint_name).replace("\\", "/")
-        move(before_image_src, before_image_dst)
-        move(after_image_src, after_image_dst)
+    # inference_directory = os.path.join(TARGET_DATA_FOLDER, "inference").replace("\\", "/")
+    # os.makedirs(inference_directory, exist_ok=True)
+    #
+    # inference_before_directory = os.path.join(inference_directory, "before").replace("\\", "/")
+    # os.makedirs(inference_before_directory, exist_ok=True)
+    #
+    # inference_after_directory = os.path.join(inference_directory, "after").replace("\\", "/")
+    # os.makedirs(inference_after_directory, exist_ok=True)
+    #
+    # for datapoint_name in tqdm(intersection):
+    #     before_image_src = os.path.join(temp_before_directory, datapoint_name).replace("\\", "/")
+    #     after_image_src = os.path.join(temp_after_directory, datapoint_name).replace("\\", "/")
+    #
+    #     before_image_dst = os.path.join(inference_before_directory, datapoint_name).replace("\\", "/")
+    #     after_image_dst = os.path.join(inference_after_directory, datapoint_name).replace("\\", "/")
+    #     move(before_image_src, before_image_dst)
+    #     move(after_image_src, after_image_dst)
 
 
 def create_version_file(version_number, TARGET_DATA_FOLDER, VERSION_FILE_NAME):
