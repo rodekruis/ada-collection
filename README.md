@@ -10,7 +10,9 @@ This repo wraps two packages:
 The damage assessment framework & model is at [caladrius:ada-0.1](https://github.com/rodekruis/caladrius/tree/ada-0.1) automatically installed via Docker ([caladrius.Dockerfile](https://github.com/rodekruis/ada-collection/blob/master/caladrius.Dockerfile)).
 
 > [!IMPORTANT]  
-> This readme is intended for the general public. **For 510-specific instructions during emergencies, see the [ADA SOP](https://github.com/rodekruis/ada-collection/blob/master/docs/SOP.md).**
+> This readme is intended for the general public.
+>
+> **For 510-specific instructions during emergencies, see the [ADA SOP](https://github.com/rodekruis/ada-collection/blob/master/docs/SOP.md).**
 
 ## Getting started
 
