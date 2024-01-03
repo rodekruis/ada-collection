@@ -29,6 +29,7 @@ setuptools.setup(
             f"load-images-azure = {PROJECT_NAME}.get_images_maxar_azure:main",
             f"filter-images = {PROJECT_NAME}.filter_images:main",
             f"filter-buildings = {PROJECT_NAME}.filter_buildings:main",
+            f"get-osm-buildings = {PROJECT_NAME}.get_osm_buildings_in_raster:main",
             f"final-layer = {PROJECT_NAME}.final_layer:main",
             f"prepare-data = {PROJECT_NAME}.prepare_data_for_caladrius:main",
             f"create-index = {PROJECT_NAME}.create_index:main",
