@@ -10,8 +10,12 @@ https://portal.azure.com/#@rodekruis.onmicrosoft.com/resource/subscriptions/b2d2
 sudo blobfuse training-data --tmp-path=/mnt/resource/blobfusetmp  --config-file=blobfuse/fuse_connection_adatraining.cfg -o attr_timeout=240 -o entry_timeout=240 -o negative_timeout=120 -o allow_other
 
 # in this training, we prepared the images for you in the directory ~/training-data/hurricane-dorian.
-# In real life, you need to manually upload them to the datalake OR download them from Maxar open data using
-# > load-images --disaster typhoon-mangkhut --dest training-data/typhoon-mangkhut
+# In real life, you need to manually upload them to the datalake OR download them from Maxar open data
+# 1. go to https://www.maxar.com/open-data
+# 2. browse to the relevant disaster
+# 3. copy the name of the disaster from the URL (e.g. "typhoon-mangkhut" from https://www.maxar.com/open-data/typhoon-mangkhut)
+# 4. download the images with 
+# load-images --disaster typhoon-mangkhut --dest ~/training-data/typhoon-mangkhut
 
 # copy images on the VM (processing is faster locally)
 cp -r ~/training-data/hurricane-dorian ~/hurricane-dorian
