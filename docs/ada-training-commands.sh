@@ -16,7 +16,8 @@ sudo blobfuse training-data --tmp-path=/mnt/resource/blobfusetmp  --config-file=
 # copy images on the VM (processing is faster locally)
 cp -r ~/training-data/hurricane-dorian ~/hurricane-dorian
 
-# check on QGIS if OSM is good enough; if yes, download them with
+# download the images from the datalake to your local machine, visualize them with QGIS and check if OpenStreetMap (OSM) is good enough;
+# if yes, download OSM buildings with
 cd ~/hurricane-dorian
 get-osm-buildings --raster pre-event/1050010012BCAE00-pre-clipped.tif
 
