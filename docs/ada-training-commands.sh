@@ -20,6 +20,7 @@ sudo blobfuse training-data --tmp-path=/mnt/resource/blobfusetmp  --config-file=
 4. run 'ls'
 5. all datat in the datalake storage is now available within the vm
 
+
 ## Getting Images
 # Next step would be to check if there are satellite images available that cover the relevant area, pre and post images overlap and that are of sufficient quality. 
 # This can be quiet a hassle since we are working with big files here. Downloading the images and visualizing them in QGIS is a lot of work!! (is there a QGIS plugin to directly connect to Azure Blob Storage)?
@@ -38,6 +39,7 @@ sudo blobfuse training-data --tmp-path=/mnt/resource/blobfusetmp  --config-file=
 # Then copy images from the datalake storage to the VM (processing is faster locally)
 cp -r ~/training-data/hurricane-dorian ~/hurricane-dorian
 
+
 ## Getting building footprints
 # If you haven't already, download the images from the datalake to your local machine. 
 # Visualize them with QGIS and check if OpenStreetMap (OSM) buildings are good enough;
@@ -53,6 +55,7 @@ cp -r ~/training-data/hurricane-dorian ~/hurricane-dorian
 
 # if not, check Microsoft buildings
 # https://github.com/microsoft/GlobalMLBuildingFootprints/blob/main/examples/example_building_footprints.ipynb
+
 
 ## Run ADA
 # prepare data for caladrius (damage classification model)
@@ -70,12 +73,15 @@ final-layer --builds buildings.geojson --damage caladrius/runs/run-input_size_32
 # copy it back on the datalake, download it locally and visualize it with QGIS
 cp buildings-predictions.geojson ~/training-data/hurricane-dorian/
 
+
 ## Optionally: create map
+# ...
 
 
 ## Shut down
 # unmount the datalake storage
 sudo fusermount -u training-data
+
 
 ## Final notes
 # We have run everything on a VM now. .... Can also use Azure Batch ....
