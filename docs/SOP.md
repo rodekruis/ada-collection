@@ -15,7 +15,7 @@ Prerequisites:
 * High-resolution (<0.6 m/pixel) optical satellite imagery of the affected area, both pre- and post-disaster, **must** be available.
 * The pre- and post-disaster imagery **must** spatially overlap, since ADA needs both images for each building.
 * There **should** be building information (polygons) already available by [OpenStreetMap](https://www.openstreetmap.org/), [Microsoft](https://github.com/microsoft/GlobalMLBuildingFootprints/blob/main/examples/example_building_footprints.ipynb), or [Google](https://sites.research.google/open-buildings/#download). 
-  * if not, buildings can be detected automatically using [ABD](https://github.com/rodekruis/ada-collection/tree/master/abd_model), but the quality of the results will strongly depends on building density, being lower for densely built-up areas.
+  * if not, buildings can be detected automatically using [ABD](https://github.com/rodekruis/ada-collection/tree/master/abd_model), but the quality of the results will strongly depend on building density, being lower for densely built-up areas.
 
 ### 3. How do I run ADA?
 1. ...
