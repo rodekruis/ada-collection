@@ -23,7 +23,7 @@ sudo blobfuse training-data --tmp-path=/mnt/resource/blobfusetmp  --config-file=
 ## Getting Images
 # Next step would be to check if there are satellite images available that cover the relevant area, pre and post images overlap and that are of sufficient quality. 
 # Have a good look at the file names of the sattelite images, they often correspond to geographical areas and can already tell you which pre and post images might overlap.
-# Take into account that this might take some time. We are working with big files, downloading images and visualizing them in QGIS takes some time :) (is there a QGIS plugin to directly connect to Azure Blob Storage)
+# Take into account that this might take some time. We are working with big files, downloading images and visualizing them in QGIS takes some time :) (is there a QGIS plugin to directly connect to Azure Blob Storage?)
 
 # A common source for good satellite images would be Maxar. If they have images available, the first step would be to manually upload them to the datalake (divided in pre- and post-event) OR download them from Maxar open data
 # 1. go to https://www.maxar.com/open-data
