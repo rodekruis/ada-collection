@@ -55,9 +55,15 @@ If you want to download the images from Maxar open data
   ```
 
 ### 2. Check the imagery
-Verify that the imagery is cloud-free and that building damage is visible. Can be done locally by downloading the images and visualizing them with QGIS.
+Verify that the imagery is
+* optical (RGB), or multi-spectral with optical
+* high-resolution (<0.6 m/pixel)
+* cloud-free
+  * if clouds are present, make sure to
+* and that building damage is visible. Can be done locally by downloading the images and visualizing them with QGIS.
 
-> [!TIP]
+
+> [!IMPORTANT]
 > NOT YET TESTED! Allegedly, you can visualize images from Maxar Open data using [opengeos/solara-maxar](https://github.com/opengeos/solara-maxar).
 
 ### 3. Get building footprint
@@ -67,33 +73,42 @@ The second step is to get a vector file (.geojson) with the buildings in the aff
 run get-osm-buildings --raster ~/data/<event-name>/pre-event/<image-name>.tif
 ```
 
-* if OSM is not good enough, check [Google buildings](https://sites.research.google/open-buildings/#download)
+* if OSM is not good enough, check [Google buildings](https://colab.research.google.com/github/google-research/google-research/blob/master/building_detection/open_buildings_download_region_polygons.ipynb)
 * if also Google is not good enough, check [Microsoft buildings](https://github.com/microsoft/GlobalMLBuildingFootprints/blob/main/examples/example_building_footprints.ipynb)
 * if also Microsoft is not good enough, run [automated-building-detection](https://github.com/rodekruis/automated-building-detection?tab=readme-ov-file#end-to-end-example)
 * place the output `buildings.geojson` in `~/data/<event-name>`
 
-### 3. Run ADA
+### 4. Run ADA
 * [OPTIONAL] Copy images from the datalake storage to the VM (processing is faster locally)
 ```
 cp -r ~/data/<event-name> ~/<event-name>
 ```
-* prepare data for caladrius (damage classification model)
+* Prepare data for caladrius (damage classification model)
 ```
 cd ~/<event-name>
 prepare-data --data . --buildings buildings.geojson --dest caladrius
 ```
-* run caladrius
+* Run caladrius
 ```
 conda activate cal
 CUDA_VISIBLE_DEVICES="0" python ~/caladrius/caladrius/run.py --run-name run --data-path caladrius --model-type attentive --model-path ~/data/caladrius_att_effnet4_v1.pkl --checkpoint-path caladrius/runs --batch-size 2 --number-of-workers 4 --classification-loss-type f1 --output-type classification --inference
 ```
-* prepare the final vector file with building polygons and caladrius' predictions
+* Prepare the final vector file with building polygons and caladrius' predictions
 ```
 conda activate base
 final-layer --builds buildings.geojson --damage caladrius/runs/run-input_size_32-learning_rate_0.001-batch_size_2/predictions/run-split_inference-epoch_001-model_attentive-predictions.txt --out buildings-predictions.geojson
 ```
-* copy it back on the datalake, download it locally and visualize it with QGIS
+* Copy it back on the datalake, download it locally and visualize it with QGIS
 ```
 cp buildings-predictions.geojson ~/data/<event-name>
 ```
-* create a map and share
+
+### 5. Interpret and communicate about ADA
+* This is an AI-based assessment: it is not perfect, but it is fast. 
+* The **expected accuracy** of ADA on new disasters is **around 60-70%**: this means that **3 out of 5** buildings should be correctly assessed. Make sure to communicate this clearly with your end users before sharing the results.
+* To be sure, take 20/50/100 random buildings and check that at least 15/30/60 buildings were correctly assessed.
+  * If this the case, manually correct the most obvious mistakes (if any) and proceed to create a map. 
+  * If this is not the case, it is probably connected with the quality of the images: go back to step #2 and repeat.
+* Create a map and share; please re-use the disclaimers and style from previous examples:
+  * [Libya Floods 2023](https://drive.google.com/file/d/1QCCgf2wcQDeNCThPR9hckTXJEuZZyObD/view?usp=sharing)
+  * [Turkey/Syria Earthquake 2023](https://drive.google.com/file/d/1bRnv5Gu1Bx5X2EB2euYDcrNzu9Y-50Rm/view?usp=sharing)

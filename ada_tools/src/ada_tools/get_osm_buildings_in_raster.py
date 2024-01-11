@@ -29,7 +29,6 @@ def num2deg(xtile, ytile, zoom):
 @click.option('--raster', help='input (raster)')
 @click.option('--out', default='buildings.geojson', help='output (buildings)')
 def main(raster, out):
-    # raster_file = '105001001875DA00-post.tif'
     ra = rasterio.open(raster)
     bounds = ra.bounds
     
@@ -83,7 +82,6 @@ def main(raster, out):
     
     # convert to geodataframe and save as geojson
     geopandas_dataframe.crs = {'init': 'epsg:4326'}
-    print(geopandas_dataframe)
     geopandas_dataframe.to_file(filename=out, driver='GeoJSON')
 
 

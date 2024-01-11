@@ -110,7 +110,13 @@ def main(disaster, dest, splitdate, maxpre, maxpost, maxthreads, progress_format
     # apply maxpre and maxpost
     images_pre = images_pre[:maxpre]
     images_post = images_post[:maxpost]
-
+    
+    if len(images_pre) == 0 or len(images_post) == 0:
+        print('No pre- and/or post-disaster images found!')
+        print('This is probably because the images are not divided as such in the URLs from Maxar.')
+        print('Try to run load-images with the extra option "--splitdate YYYY-MM-DD", using the date of the disaster.')
+        print('The date will be used to divide the images.')
+        
     print("Selected pre-images:")
     print("\n".join(images_pre))
     print("Selected post-images:")
