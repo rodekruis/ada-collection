@@ -25,9 +25,12 @@ These Standard Operating Procedures (SOP) are meant for 510 to use ADA during em
 ### 1. Get the imagery
 The first step is to load the satellite imagery in the container `operations` of the datalake storage `adadatalakestorage`. 
 
-Login into the VM and mount the container on the directory `data` with
+Login into the VM `510ada-NC8asT4` using SSH or Bastion (credentials in BitWarden). 
+
+Mount the container on the directory `data` with
 ```commandline
-sudo blobfuse ~/data --tmp-path=/mnt/resource/blobfusetmp  --config-file=~/blobfuse/fuse_connection_adadatalake.cfg -o attr_timeout=240 -o entry_timeout=240 -o negative_timeout=120 -o allow_other
+sudo mkdir /mnt/resource/blobfusetmp -p
+sudo blobfuse data --tmp-path=/mnt/resource/blobfusetmp  --config-file=blobfuse/fuse_connection_adadatalake.cfg -o attr_timeout=240 -o entry_timeout=240 -o negative_timeout=120 -o allow_other
 ```
 
 If you received a link to the images (e.g. from another agency), simply download and extract it in `data`.
@@ -59,7 +62,6 @@ Verify that the imagery is
 * optical (RGB), or multi-spectral with optical
 * high-resolution (<0.6 m/pixel)
 * cloud-free
-  * if clouds are present, make sure to
 * and that building damage is visible. Can be done locally by downloading the images and visualizing them with QGIS.
 
 
