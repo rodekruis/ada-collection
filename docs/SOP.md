@@ -40,7 +40,7 @@ cd ~/data/<event-name>
 wget <link-to-my-images>
 ```
 
-If you have the images on your local machine, simply upload them to the data lake storage, in the `operations` container.
+If you already have the images on your local machine, simply upload them to the data lake storage, in the `operations` container.
 
 > [!TIP]
 > Use [Azure Storage Explorer](https://azure.microsoft.com/en-us/products/storage/storage-explorer) to upload and organize images if you're not familiar with command line.
@@ -48,11 +48,17 @@ If you have the images on your local machine, simply upload them to the data lak
 > [!CAUTION]
 > Make sure that the images are divided in two sub-folders called `pre-event` and `post-event`.
 
-If you want to download the images from Maxar open data
-  1. go to https://www.maxar.com/open-data
+If you first need to download the images from Maxar
+  1. go to [Maxar Geospatial Platform (MGP) Xpress](https://xpress.maxar.com)
+  2. log in (credentials are in BitWarden)
+  3. browse to the relevant event
+  4. download the images one by one
+
+DEPRECATED: for old events (pre-2023) there is a script that lists all images from the old [Maxar Open Data Portal](https://www.maxar.com/open-data). To use that,
+  1. go to [Maxar Open Data Portal](https://www.maxar.com/open-data)
   2. browse to the relevant event
-  3. copy the name of the event from the URL (e.g. "typhoon-mangkhut" from https://www.maxar.com/open-data/typhoon-mangkhut)
-  4. download the images with 
+  6. copy the name of the event from the URL (e.g. "typhoon-mangkhut" from https://www.maxar.com/open-data/typhoon-mangkhut)
+  7. download the images with 
   ```commandline
   load-images --disaster <event-name> --dest ~/data/<event-name>
   ```
@@ -63,10 +69,6 @@ Verify that the imagery is
 * high-resolution (<0.6 m/pixel)
 * cloud-free
 * and that building damage is visible. Can be done locally by downloading the images and visualizing them with QGIS.
-
-
-> [!IMPORTANT]
-> NOT YET TESTED! Allegedly, you can visualize images from Maxar Open data using [opengeos/solara-maxar](https://github.com/opengeos/solara-maxar).
 
 ### 3. Get building footprint
 The second step is to get a vector file (.geojson) with the buildings in the affected area.
