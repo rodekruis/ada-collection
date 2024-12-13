@@ -2,7 +2,7 @@ requests==2.24.0
 albumentations==0.4.6
 click==8.1.4
 mercantile==1.1.5
-numpy==1.19.1
+numpy==1.21.0
 osmium==3.0.1
 Pillow==9.5.0
 psycopg2-binary==2.8.5
